@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Dumbbell, Award, ArrowRight, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { AuthedImage } from '../AuthedImage';
 
 export function PanelSelector() {
   const navigate = useNavigate();
@@ -45,7 +46,14 @@ export function PanelSelector() {
       {/* Top bar (Header leve) */}
       <div className="absolute top-6 right-6 flex items-center gap-4">
         <div className="flex items-center gap-3 px-4 py-2 rounded-lg border dark:border-zinc-800 border-slate-200 dark:bg-zinc-900/50 bg-white/50 backdrop-blur-md">
-          {user?.avatar && <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded object-cover grayscale opacity-80" />}
+          {user?.avatar && (
+            <AuthedImage
+              src={user.avatar}
+              token={user.accessToken}
+              alt={user.name}
+              className="w-6 h-6 rounded object-cover grayscale opacity-80"
+            />
+          )}
           <span className="text-sm dark:text-zinc-300 text-slate-700 font-medium tracking-wide">{user?.name}</span>
         </div>
         <button

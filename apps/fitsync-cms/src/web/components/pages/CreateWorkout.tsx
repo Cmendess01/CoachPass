@@ -17,6 +17,7 @@ import {
   Award,
 } from 'lucide-react';
 import { ExerciseModal } from '../ExerciseModal';
+import { AuthedImage } from '../AuthedImage';
 import { getExerciseDetail, ExerciseDetail } from '../../data/exerciseData';
 import { exerciseLibrary, difficultyColors, Exercise } from '../../data/exerciseLibrary';
 import { toast } from 'sonner';
@@ -400,7 +401,12 @@ export function CreateWorkout() {
                 Aluno Selecionado
               </p>
               <div className="flex items-center gap-3">
-                <img src={studentData.avatar} alt={studentData.name} className="w-12 h-12 rounded-xl" />
+                <AuthedImage
+                  src={studentData.avatar}
+                  token={user?.accessToken}
+                  alt={studentData.name}
+                  className="w-12 h-12 rounded-xl object-cover"
+                />
                 <div>
                   <p className="text-sm dark:text-white text-slate-900" style={{ fontWeight: 600 }}>
                     {studentData.name}

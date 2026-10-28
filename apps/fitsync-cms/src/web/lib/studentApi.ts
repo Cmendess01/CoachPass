@@ -122,6 +122,11 @@ export type MealPlanDoc = {
   observations?: string | null
   isInformational?: boolean | null
   publishedAt?: string | null
+  caloriesTarget?: number | null
+  proteinPercent?: number | null
+  carbsPercent?: number | null
+  fatPercent?: number | null
+  durationWeeks?: number | null
   meals?: Array<{
     id?: string
     name: string

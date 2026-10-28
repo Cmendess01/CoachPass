@@ -59,6 +59,7 @@ type LinkDoc = {
         id: string | number
         name?: string
         email?: string
+        avatarUrl?: string | null
       }
 }
 
@@ -150,13 +151,17 @@ export function mapLinkedPerson(doc: LinkDoc): LinkedPerson | null {
   if (!userId) return null
   const name = relName(doc.student, 'Aluno')
   const email = typeof doc.student === 'object' && doc.student ? doc.student.email || '' : ''
+  const uploaded =
+    typeof doc.student === 'object' && doc.student && typeof doc.student.avatarUrl === 'string'
+      ? doc.student.avatarUrl.trim()
+      : ''
   return {
     userId,
     linkId: String(doc.id),
     name,
     email,
     status: doc.status,
-    avatar: avatarFor(name),
+    avatar: uploaded || avatarFor(name),
   }
 }
 
@@ -304,29 +309,43 @@ export async function fetchWorkoutsForStudent(studentId: string, token: string):
   return data.docs
 }
 
+type MealPlanWrite = {
+  student?: string
+  title: string
+  observations?: string | null
+  status?: 'draft' | 'published'
+  meals: MealPlanDoc['meals']
+  caloriesTarget?: number | null
+  proteinPercent?: number | null
+  carbsPercent?: number | null
+  fatPercent?: number | null
+  durationWeeks?: number | null
+}
+
+function mealPlanBody(input: MealPlanWrite) {
+  return {
+    ...(input.student
+      ? { student: toNumericRelationId(input.student) ?? input.student }
+      : {}),
+    title: input.title,
+    observations: input.observations || undefined,
+    status: input.status || 'published',
+    source: 'professional',
+    publishedAt: (input.status || 'published') === 'published' ? new Date().toISOString() : undefined,
+    meals: input.meals,
+    caloriesTarget: input.caloriesTarget ?? undefined,
+    proteinPercent: input.proteinPercent ?? undefined,
+    carbsPercent: input.carbsPercent ?? undefined,
+    fatPercent: input.fatPercent ?? undefined,
+    durationWeeks: input.durationWeeks ?? undefined,
+  }
+}
+
 export async function createMealPlan(
-  input: {
-    student: string
-    title: string
-    observations?: string | null
-    status?: 'draft' | 'published'
-    meals: MealPlanDoc['meals']
-  },
+  input: MealPlanWrite & { student: string },
   token: string,
 ): Promise<MealPlanDoc> {
-  return postJson<MealPlanDoc>(
-    MEAL_PLANS_API,
-    {
-      student: toNumericRelationId(input.student) ?? input.student,
-      title: input.title,
-      observations: input.observations || undefined,
-      status: input.status || 'published',
-      source: 'professional',
-      publishedAt: (input.status || 'published') === 'published' ? new Date().toISOString() : undefined,
-      meals: input.meals,
-    },
-    token,
-  )
+  return postJson<MealPlanDoc>(MEAL_PLANS_API, mealPlanBody(input), token)
 }
 
 export async function fetchMealPlanById(id: string, token: string): Promise<MealPlanDoc> {
@@ -335,25 +354,10 @@ export async function fetchMealPlanById(id: string, token: string): Promise<Meal
 
 export async function updateMealPlan(
   id: string,
-  input: {
-    title: string
-    observations?: string | null
-    status?: 'draft' | 'published'
-    meals: MealPlanDoc['meals']
-  },
+  input: MealPlanWrite,
   token: string,
 ): Promise<MealPlanDoc> {
-  return patchJson<MealPlanDoc>(
-    `${MEAL_PLANS_API}/${id}`,
-    {
-      title: input.title,
-      observations: input.observations || undefined,
-      status: input.status || 'published',
-      publishedAt: (input.status || 'published') === 'published' ? new Date().toISOString() : undefined,
-      meals: input.meals,
-    },
-    token,
-  )
+  return patchJson<MealPlanDoc>(`${MEAL_PLANS_API}/${id}`, mealPlanBody(input), token)
 }
 
 export async function fetchMealPlansForStudent(studentId: string, token: string): Promise<MealPlanDoc[]> {

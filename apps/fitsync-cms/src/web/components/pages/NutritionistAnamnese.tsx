@@ -40,7 +40,20 @@ export function NutritionistAnamnese() {
   useEffect(() => {
     if (!user?.accessToken || !student) return
     fetchAnamnesesForStudent(student, user.accessToken)
-      .then(setItems)
+      .then((docs) => {
+        setItems(docs)
+        const latest = docs[0]
+        const answers = latest?.answers as { history?: string; habits?: string; goals?: string } | undefined
+        if (answers && typeof answers === 'object') {
+          setHistory(answers.history || '')
+          setHabits(answers.habits || '')
+          setGoals(answers.goals || '')
+        } else {
+          setHistory('')
+          setHabits('')
+          setGoals('')
+        }
+      })
       .catch(() => setItems([]))
   }, [student, user?.accessToken])
 
@@ -48,6 +61,17 @@ export function NutritionistAnamnese() {
     if (!user?.accessToken || !student) {
       toast.error('Selecione um paciente.')
       return
+    }
+    if (status === 'completed') {
+      const missing = [
+        !history.trim() && 'histórico',
+        !habits.trim() && 'hábitos',
+        !goals.trim() && 'objetivos',
+      ].filter(Boolean)
+      if (missing.length) {
+        toast.error(`Para concluir, preencha ${missing.join(', ')}.`)
+        return
+      }
     }
     setSaving(true)
     try {
@@ -82,7 +106,7 @@ export function NutritionistAnamnese() {
           <option value="">Paciente</option>
           {patients.map((row) => (
             <option key={row.userId} value={row.userId}>
-              {row.name}
+              {row.name} · {row.email} · {row.userId}
             </option>
           ))}
         </select>

@@ -311,6 +311,11 @@ export interface MealPlan {
   observations?: string | null;
   isInformational?: boolean | null;
   publishedAt?: string | null;
+  caloriesTarget?: number | null;
+  proteinPercent?: number | null;
+  carbsPercent?: number | null;
+  fatPercent?: number | null;
+  durationWeeks?: number | null;
   meals?:
     | {
         name: string;
@@ -787,6 +792,11 @@ export interface MealPlansSelect<T extends boolean = true> {
   observations?: T;
   isInformational?: T;
   publishedAt?: T;
+  caloriesTarget?: T;
+  proteinPercent?: T;
+  carbsPercent?: T;
+  fatPercent?: T;
+  durationWeeks?: T;
   meals?:
     | T
     | {

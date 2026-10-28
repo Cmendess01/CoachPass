@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Search, Stethoscope, UserPlus, Utensils } from 'lucide-react'
 import { toast } from 'sonner'
 import { AddPatientModal } from '../AddPatientModal'
+import { AuthedImage } from '../AuthedImage'
 import { useAuth } from '../../context/AuthContext'
 import { fetchLinkedPeople, revokeLink, type LinkedPerson } from '../../lib/professionalApi'
 
@@ -155,10 +156,17 @@ export function NutritionistDashboard() {
                 }
                 className="flex flex-1 items-center gap-3 text-left min-w-0"
               >
-                <img src={patient.avatar} alt="" className="w-10 h-10 rounded-full" />
+                <AuthedImage
+                  src={patient.avatar}
+                  token={user?.accessToken}
+                  alt=""
+                  className="w-10 h-10 rounded-full object-cover"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium dark:text-white text-slate-900">{patient.name}</p>
-                  <p className="text-xs dark:text-zinc-500 text-slate-400 truncate">{patient.email}</p>
+                  <p className="text-xs dark:text-zinc-500 text-slate-400 truncate">
+                    {patient.email} · {patient.userId}
+                  </p>
                 </div>
                 <span className="text-xs dark:text-zinc-400 text-slate-500">
                   {patient.status === 'pending' ? 'Pendente' : 'Ativo'}

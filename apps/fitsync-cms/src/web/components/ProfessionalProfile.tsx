@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../context/AuthContext'
 import { fetchLinkedPeople, fetchMeUser, type LinkedPerson, type ProfessionalUser } from '../lib/professionalApi'
+import { AuthedImage } from './AuthedImage'
 
 const card = 'rounded-2xl border dark:border-zinc-800 border-slate-200 dark:bg-zinc-900 bg-white p-5'
 
@@ -24,8 +25,9 @@ export function ProfessionalProfile() {
   return (
     <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
       <div className={card}>
-        <img
+        <AuthedImage
           src={doc?.avatarUrl || user.avatar}
+          token={user.accessToken}
           alt={name}
           className="w-16 h-16 rounded-2xl object-cover"
         />

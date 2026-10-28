@@ -50,6 +50,24 @@ export async function linkedStudentIds(
     .filter((value): value is string => Boolean(value))
 }
 
+export async function linkedProfessionalIds(req: PayloadRequest): Promise<string[]> {
+  const id = userId(req)
+  if (!id) return []
+  const result = await req.payload.find({
+    collection: 'professional-links',
+    where: {
+      and: [{ student: { equals: id } }, { status: { equals: 'active' } }],
+    },
+    limit: 20,
+    depth: 0,
+    overrideAccess: true,
+    req,
+  })
+  return result.docs
+    .map((doc) => relationId(doc.professional))
+    .filter((value): value is string => Boolean(value))
+}
+
 export async function hasActiveLink(args: {
   req: PayloadRequest
   studentId: string | number

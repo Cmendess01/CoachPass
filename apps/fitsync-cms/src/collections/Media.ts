@@ -1,30 +1,49 @@
-import type { CollectionConfig, Where } from 'payload'
+import type { CollectionConfig } from 'payload'
 import { ValidationError } from 'payload'
 
 import { coerceNumericRelations, toNumericRelationId } from '../access/relationIds'
 import { isSuperUser } from '../access/isSuper'
-import { userId } from '../access/roles'
+import { userRole } from '../access/roles'
+import { linkedProfessionalIds, linkedStudentIds } from '../access/links'
+
+function actorId(req: { user?: { id?: unknown } | null }): number | null {
+  return toNumericRelationId(req.user?.id)
+}
+
+async function mediaOwnerAccess({ req }: { req: Parameters<typeof linkedStudentIds>[0] }) {
+  if (isSuperUser(req)) return true
+  const id = actorId(req)
+  if (id === null) return false
+  const or: { owner: { equals: number } | { in: number[] } }[] = [{ owner: { equals: id } }]
+  const role = userRole(req)
+  const linkedIds =
+    role === 'personal' || role === 'nutritionist'
+      ? await linkedStudentIds(req, { status: 'active' })
+      : role === 'student'
+        ? await linkedProfessionalIds(req)
+        : []
+  const linked = linkedIds
+    .map((value) => toNumericRelationId(value))
+    .filter((value): value is number => value !== null)
+  if (linked.length > 0) or.push({ owner: { in: linked } })
+  return { or }
+}
 
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    read: ({ req }): boolean | Where => {
-      if (isSuperUser(req)) return true
-      const id = userId(req)
-      if (!id) return false
-      return { owner: { equals: id } }
-    },
+    read: mediaOwnerAccess,
     create: ({ req }) => isSuperUser(req) || Boolean(req.user),
-    update: ({ req }): boolean | Where => {
+    update: ({ req }) => {
       if (isSuperUser(req)) return true
-      const id = userId(req)
-      if (!id) return false
+      const id = actorId(req)
+      if (id === null) return false
       return { owner: { equals: id } }
     },
-    delete: ({ req }): boolean | Where => {
+    delete: ({ req }) => {
       if (isSuperUser(req)) return true
-      const id = userId(req)
-      if (!id) return false
+      const id = actorId(req)
+      if (id === null) return false
       return { owner: { equals: id } }
     },
   },

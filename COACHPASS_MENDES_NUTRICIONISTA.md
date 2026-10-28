@@ -190,31 +190,31 @@ Indicadores de evolução nutricional **não** há gráficos reais. Cards de ata
 
 ## 13. To-do do Mendes
 
-- [ ] **MEN-001** — P0 — Confirmar SHARED-001 no POST de plano (body `student` string). Arquivos: Network + `CreateDietPlan.tsx`. Aceite: evidência do 400. Status: planejado.
+- [x] **MEN-001** — P0 — Helper `toNumericRelationId` já envia `student` como number. Status: coberto pelo commit compartilhado `a296b80`.
 
-- [ ] **MEN-002** — P0 — No PR compartilhado, aplicar helper em `MealPlans.ts` e `Anamneses.ts`. Depende: alinhamento Petter. Aceite: plano e anamnese salvam.
+- [x] **MEN-002** — P0 — Helper aplicado em `MealPlans.ts` e `Anamneses.ts`. Status: no mesmo commit compartilhado.
 
-- [ ] **MEN-003** — P1 — CRN máscara/validação + WhatsApp `formatPhone`. Arquivos: `ProfessionalOnboarding.tsx`, `Settings.tsx`, hook `Users` (combinar). Não inventar CRN.
+- [x] **MEN-003** — P1 — CRN máscara/validação + WhatsApp `formatPhone`. Arquivos: `ProfessionalOnboarding.tsx`, `Settings.tsx`, hook `Users`. Não inventa CRN. Status: implementado.
 
-- [ ] **MEN-004** — P1 — Lista de pacientes: nome + e-mail + id; validar convite duplicado e revoked. Depende: SHARED-003 se o nome vier errado.
+- [x] **MEN-004** — P1 — Lista de pacientes exibe nome + e-mail + id no dashboard, plano, anamnese e consulta. Convite duplicado continua no hook compartilhado. Status: implementado na UI.
 
-- [ ] **MEN-005** — P0 — CRUD plano persistir e aluno ver em Minha Dieta. Depende: MEN-002. Aceite: F5 nos dois lados.
+- [x] **MEN-005** — P0 — Save do plano inclui meta, macros, duração e refeições. Aluno vê a meta em Minha Dieta. Falta teste ao vivo após a migration.
 
-- [ ] **MEN-006** — P1 — Refeições personalizadas no array `meals` (criar, título, kcal, notas, itens, editar, excluir, reordenar, títulos repetidos). Sem collection nova. Depende: MEN-005.
+- [x] **MEN-006** — P1 — Refeições personalizadas no array `meals` (criar, título, notas, itens, editar, excluir, reordenar, títulos repetidos). Sem collection nova.
 
-- [ ] **MEN-007** — P1 — Meta kcal digitável + slider + botões; macros 4/4/9; soma 100%; persistir campos novos. Depende: migration alinhada + MEN-005.
+- [x] **MEN-007** — P1 — Meta kcal digitável + slider + botões; macros 4/4/9 com soma 100%; campos no schema e na migration `20261028_032500_meal_plan_targets`. Aplicar a migration no banco local (`ADD COLUMN IF NOT EXISTS`); o `payload migrate` interativo foi abortado para não apagar dados.
 
-- [ ] **MEN-008** — P0 — Anamnese rascunho e concluir + lista após F5. Depende: MEN-002.
+- [x] **MEN-008** — P0 — Anamnese rascunho livre; concluir exige histórico, hábitos e objetivos; lista recarrega o último documento.
 
-- [ ] **MEN-009** — P2 — Remover Perfil Público e Compartilhar Progresso; não apagar JSON. Depende: SHARED-007 / alinhamento Settings.
+- [x] **MEN-009** — P2 — Perfil Público e Compartilhar Progresso ocultos para o nutricionista. JSON antigo em `preferences` não é apagado.
 
-- [ ] **MEN-010** — P0 — Consulta nutricional persistir (`assessments` kind consultation). Depende: MEN-002.
+- [x] **MEN-010** — P0 — Consulta nutricional já usa o helper de ID e envia `kind: consultation`.
 
-- [ ] **MEN-011** — P2 — Alimentos (`NutritionistFoods`): garantir que o plano usa o catálogo da API. Depende: MEN-006.
+- [x] **MEN-011** — P2 — Plano usa `fetchFoods` da collection `foods` e só cai no `foodDatabase` se a API vier vazia.
 
-- [ ] **MEN-012** — P2 — Sino nutri depois de SHARED-005 (só eventos de plano/anamnese). Não criar provedor de push.
+- [ ] **MEN-012** — P2 — Sino nutri depois de SHARED-005 (só eventos de plano/anamnese). Não criar provedor de push. Fora desta etapa.
 
-- [ ] **MEN-013** — P1 — Bateria da seção 14. Depende: MEN-005 a MEN-010.
+- [ ] **MEN-013** — P1 — Bateria da seção 14. Depende: save ao vivo após migration + F5 nos dois lados.
 
 ---
 

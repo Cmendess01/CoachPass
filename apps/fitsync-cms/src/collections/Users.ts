@@ -5,6 +5,7 @@ import { linkedStudentIds } from '../access/links'
 import { isSuperUser } from '../access/isSuper'
 import { userId, userRole } from '../access/roles'
 import { getPasswordErrors, type PasswordContext } from '../lib/passwordPolicy'
+import { isValidCrn } from '../web/lib/credentials'
 
 const PASSWORD_OPERATIONS = new Set(['create', 'update', 'resetPassword'])
 const SELF_SERVICE_ROLES = new Set(['student', 'personal', 'nutritionist'])
@@ -198,6 +199,23 @@ export const Users: CollectionConfig = {
               })
             }
           }
+        }
+
+        const nextProfessionalId =
+          typeof data.professionalId === 'string' ? data.professionalId.trim() : ''
+        const previousProfessionalId =
+          typeof originalDoc?.professionalId === 'string' ? originalDoc.professionalId.trim() : ''
+        const role = String(data.role || originalDoc?.role || userRole(req) || '')
+        if (
+          role === 'nutritionist' &&
+          nextProfessionalId &&
+          nextProfessionalId !== previousProfessionalId &&
+          !isValidCrn(nextProfessionalId)
+        ) {
+          throw new ValidationError({
+            collection: collection?.slug,
+            errors: [{ path: 'professionalId', message: 'Informe o CRN no formato CRN-3 12345.' }],
+          })
         }
 
         return data

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Settings as SettingsIcon, Bell, Shield, Globe, Lock,
@@ -14,7 +14,11 @@ import { useAuth } from '../../context/AuthContext';
 import { getPasswordErrors } from '@/lib/passwordPolicy';
 import { PasswordInput, PasswordRequirements } from '../PasswordField';
 import { deleteCurrentUser, exportMyData, fetchMeUser, patchCurrentUser } from '../../lib/professionalApi';
+import { uploadProfilePhoto } from '../../lib/studentApi';
+import { AuthedImage } from '../AuthedImage';
 import { PayloadApiError, extractPayloadMessage, USERS_API, postJson } from '@/lib/cms';
+import { formatPhone } from '../../lib/phone';
+import { formatCrn, isValidCrn, isValidWhatsapp } from '../../lib/credentials';
 
 type SettingsTab = 'profile' | 'notifications' | 'privacy' | 'security' | 'data';
 
@@ -83,6 +87,8 @@ export function Settings() {
   const [passwordSubmitAttempted, setPasswordSubmitAttempted] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -153,8 +159,44 @@ export function Settings() {
     }
   }
 
+  const handlePhoto = async (file: File) => {
+    if (!user?.accessToken || !user.id) {
+      toast.error('Sessão expirada. Entre novamente.')
+      return
+    }
+    setUploadingPhoto(true)
+    try {
+      const url = await uploadProfilePhoto(file, user.accessToken)
+      await patchCurrentUser(user.id, { avatarUrl: url }, user.accessToken)
+      updateUser({ avatar: url })
+      toast.success('Foto atualizada.')
+    } catch (err) {
+      const msg =
+        err instanceof PayloadApiError
+          ? extractPayloadMessage(err.data) || err.message
+          : err instanceof Error
+            ? err.message
+            : 'Não foi possível enviar a foto.'
+      toast.error(msg)
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   const saveProfile = async () => {
     if (!user?.accessToken) return
+    if (profileForm.whatsapp && !isValidWhatsapp(profileForm.whatsapp)) {
+      toast.error('Informe um WhatsApp com DDD e 8 ou 9 dígitos, no formato (61) 99999-9999.')
+      return
+    }
+    if (
+      user.role === 'nutritionist' &&
+      profileForm.professionalId.trim() &&
+      !isValidCrn(profileForm.professionalId)
+    ) {
+      toast.error('Informe o CRN no formato CRN-3 12345.')
+      return
+    }
     setSaving(true)
     try {
       await patchCurrentUser(
@@ -174,7 +216,6 @@ export function Settings() {
         name: profileForm.name,
         whatsapp: profileForm.whatsapp,
         professionalId: profileForm.professionalId,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(profileForm.name || 'U')}&background=10b981&color=fff`,
       })
       toast.success('Perfil atualizado.')
     } catch (err) {
@@ -300,9 +341,10 @@ export function Settings() {
             {/* User Card */}
             <div className="flex items-center gap-3 p-3 mb-2 pb-4 border-b dark:border-zinc-800 border-slate-100">
               <div className="relative">
-                <img
-                  src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=10b981&color=fff`}
-                  alt={user?.name}
+                <AuthedImage
+                  src={user?.avatar}
+                  token={user?.accessToken}
+                  alt={user?.name || 'Foto de perfil'}
                   className="w-10 h-10 rounded-xl object-cover"
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#000326] dark:bg-white border-2 dark:border-zinc-900 border-white" />
@@ -369,14 +411,29 @@ export function Settings() {
                     {/* Avatar Upload */}
                     <div className="flex items-center gap-4 mb-6">
                       <div className="relative">
-                        <img
-                          src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=10b981&color=fff`}
-                          alt={user?.name}
+                        <AuthedImage
+                          src={user?.avatar}
+                          token={user?.accessToken}
+                          alt={user?.name || 'Foto de perfil'}
                           className="w-20 h-20 rounded-2xl object-cover"
                         />
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            e.target.value = ''
+                            if (file) void handlePhoto(file)
+                          }}
+                        />
                         <button
-                          onClick={() => toast.info('Upload de foto em breve')}
-                          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-[#000326] text-white dark:bg-white dark:text-[#000326] flex items-center justify-center shadow-lg"
+                          type="button"
+                          disabled={uploadingPhoto}
+                          aria-label="Enviar foto de perfil"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-[#000326] text-white dark:bg-white dark:text-[#000326] flex items-center justify-center shadow-lg disabled:opacity-60"
                         >
                           <Camera className="w-3.5 h-3.5" />
                         </button>
@@ -394,7 +451,7 @@ export function Settings() {
                       {[
                         { label: 'Nome Completo', field: 'name', icon: User, placeholder: 'Seu nome' },
                         { label: 'E-mail', field: 'email', icon: Mail, placeholder: 'seu@gmail.com', disabled: true },
-                        { label: 'WhatsApp', field: 'whatsapp', icon: Phone, placeholder: '(00) 00000-0000' },
+                        { label: 'WhatsApp', field: 'whatsapp', icon: Phone, placeholder: '(61) 99999-9999' },
                         ...(user?.role !== 'student' ? [{ label: user?.role === 'personal' ? 'CREF' : 'CRN', field: 'professionalId', icon: Activity, placeholder: user?.role === 'personal' ? 'CREF 123456-G/SP' : 'CRN-3 12345' }] : []),
                         { label: 'Cidade', field: 'city', icon: Globe, placeholder: 'São Paulo, SP' },
                         { label: 'Instagram', field: 'instagram', icon: Star, placeholder: '@seuperfil' },
@@ -408,7 +465,16 @@ export function Settings() {
                             <input
                               type="text"
                               value={(profileForm as any)[field] || ''}
-                              onChange={e => setProfileForm(p => ({ ...p, [field]: e.target.value }))}
+                              onChange={(e) => {
+                                const raw = e.target.value
+                                const next =
+                                  field === 'whatsapp'
+                                    ? formatPhone(raw)
+                                    : field === 'professionalId' && user?.role === 'nutritionist'
+                                      ? formatCrn(raw)
+                                      : raw
+                                setProfileForm((p) => ({ ...p, [field]: next }))
+                              }}
                               placeholder={placeholder}
                               disabled={disabled}
                               className="w-full pl-10 pr-4 py-3 rounded-xl dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white text-slate-900 placeholder:dark:text-zinc-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000326]/30 dark:ring-white/30 disabled:opacity-50 transition-all"
@@ -544,12 +610,18 @@ export function Settings() {
                   </h3>
 
                   <div className="space-y-4">
-                    {[
-                      { key: 'profilePublic', label: 'Perfil Público', desc: 'Permitir que outros vejam seu perfil no CoachPass', icon: Eye },
-                      { key: 'showStats', label: 'Mostrar Estatísticas', desc: 'Exibir suas estatísticas de treino no perfil', icon: Activity },
-                      { key: 'shareProgress', label: 'Compartilhar Progresso', desc: 'Permitir que seu profissional veja seu progresso', icon: Zap },
-                      { key: 'analyticsEnabled', label: 'Analytics de Uso', desc: 'Ajude a melhorar o CoachPass com dados anônimos', icon: Star },
-                    ].map(({ key, label, desc, icon: Icon }) => (
+                      {[
+                        { key: 'profilePublic', label: 'Perfil Público', desc: 'Permitir que outros vejam seu perfil no CoachPass', icon: Eye },
+                        { key: 'showStats', label: 'Mostrar Estatísticas', desc: 'Exibir suas estatísticas de treino no perfil', icon: Activity },
+                        { key: 'shareProgress', label: 'Compartilhar Progresso', desc: 'Permitir que seu profissional veja seu progresso', icon: Zap },
+                        { key: 'analyticsEnabled', label: 'Analytics de Uso', desc: 'Ajude a melhorar o CoachPass com dados anônimos', icon: Star },
+                      ]
+                        .filter((item) =>
+                          user?.role === 'nutritionist'
+                            ? item.key !== 'profilePublic' && item.key !== 'shareProgress'
+                            : true,
+                        )
+                        .map(({ key, label, desc, icon: Icon }) => (
                       <div key={key} className="flex items-center justify-between p-5 rounded-2xl dark:bg-zinc-800/50 bg-slate-50 border dark:border-zinc-700 border-slate-200">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">

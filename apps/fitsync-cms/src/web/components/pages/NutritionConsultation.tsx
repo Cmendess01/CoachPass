@@ -83,7 +83,7 @@ export function NutritionConsultation() {
           <option value="">Paciente</option>
           {patients.map((row) => (
             <option key={row.userId} value={row.userId}>
-              {row.name}
+              {row.name} · {row.email} · {row.userId}
             </option>
           ))}
         </select>

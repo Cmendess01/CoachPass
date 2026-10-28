@@ -5,6 +5,8 @@ import { Briefcase, CreditCard, Phone, CheckCircle, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth, UserRole } from '../../context/AuthContext'
 import { USERS_API, patchJson, postJson, PayloadApiError, extractPayloadMessage } from '@/lib/cms'
+import { formatPhone } from '../../lib/phone'
+import { formatCrn, isValidCrn, isValidWhatsapp } from '../../lib/credentials'
 
 type ProfessionalType = 'personal' | 'nutritionist'
 
@@ -25,6 +27,14 @@ export function ProfessionalOnboarding() {
       return
     }
     if (!data.professionalType || !data.credential.trim()) return
+    if (data.professionalType === 'nutritionist' && !isValidCrn(data.credential)) {
+      toast.error('Informe o CRN no formato CRN-3 12345.')
+      return
+    }
+    if (data.phone.trim() && !isValidWhatsapp(data.phone)) {
+      toast.error('Informe um WhatsApp com DDD e 8 ou 9 dígitos, no formato (61) 99999-9999.')
+      return
+    }
 
     setLoading(true)
     try {
@@ -183,8 +193,18 @@ export function ProfessionalOnboarding() {
                   <input
                     type="text"
                     value={data.credential}
-                    onChange={(e) => setData({ ...data, credential: e.target.value })}
-                    placeholder="Número de registro"
+                    onChange={(e) =>
+                      setData({
+                        ...data,
+                        credential:
+                          data.professionalType === 'nutritionist'
+                            ? formatCrn(e.target.value)
+                            : e.target.value,
+                      })
+                    }
+                    placeholder={
+                      data.professionalType === 'nutritionist' ? 'CRN-3 12345' : 'Número de registro'
+                    }
                     className="w-full pl-10 pr-4 py-3 rounded-lg dark:bg-zinc-900/50 bg-slate-50/50 border dark:border-zinc-800 border-slate-200 dark:text-white text-slate-900 focus:border-blue-500 font-light"
                   />
                 </div>
@@ -198,8 +218,8 @@ export function ProfessionalOnboarding() {
                   <input
                     type="text"
                     value={data.phone}
-                    onChange={(e) => setData({ ...data, phone: e.target.value })}
-                    placeholder="(00) 00000-0000"
+                    onChange={(e) => setData({ ...data, phone: formatPhone(e.target.value) })}
+                    placeholder="(61) 99999-9999"
                     className="w-full pl-10 pr-4 py-3 rounded-lg dark:bg-zinc-900/50 bg-slate-50/50 border dark:border-zinc-800 border-slate-200 dark:text-white text-slate-900 focus:border-blue-500 font-light"
                   />
                 </div>

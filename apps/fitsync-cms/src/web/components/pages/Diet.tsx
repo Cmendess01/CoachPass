@@ -97,6 +97,15 @@ export function Diet() {
           <p className="mt-1 text-xs text-[#8e8e9a] dark:text-[#C5C5CE]/70">
             {plan.source === 'ai' ? 'Sugestão IA' : relName(plan.author, 'Nutricionista')}
           </p>
+          {(plan.caloriesTarget || plan.proteinPercent != null) && (
+            <p className="mt-2 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
+              {plan.caloriesTarget ? `Meta ${Math.round(plan.caloriesTarget)} kcal` : ''}
+              {plan.proteinPercent != null && plan.carbsPercent != null && plan.fatPercent != null
+                ? `${plan.caloriesTarget ? ' · ' : ''}P ${Math.round(plan.proteinPercent)}% · C ${Math.round(plan.carbsPercent)}% · G ${Math.round(plan.fatPercent)}%`
+                : ''}
+              {plan.durationWeeks ? ` · ${plan.durationWeeks} semanas` : ''}
+            </p>
+          )}
           {plan.observations && (
             <p className="mt-3 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">{plan.observations}</p>
           )}
@@ -114,6 +123,9 @@ export function Diet() {
                     </span>
                   )}
                 </div>
+                {meal.notes && (
+                  <p className="mt-1 text-xs text-[#8e8e9a] dark:text-[#C5C5CE]/70">{meal.notes}</p>
+                )}
                 {(meal.items || []).length > 0 && (
                   <ul className="mt-2 space-y-1">
                     {(meal.items || []).map((item, i) => (

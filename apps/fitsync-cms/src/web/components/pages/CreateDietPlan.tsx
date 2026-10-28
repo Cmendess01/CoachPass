@@ -21,6 +21,8 @@ import {
   Printer,
   Tag,
   Calendar,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -174,7 +176,44 @@ interface Meal {
   name: string;
   time: string;
   icon: string;
+  notes: string;
   foods: MealFood[];
+}
+
+type MacroKey = 'protein' | 'carbs' | 'fat'
+
+function redistributeMacros(
+  current: { protein: number; carbs: number; fat: number },
+  changed: MacroKey,
+  nextValue: number,
+): { protein: number; carbs: number; fat: number } {
+  const clamped = Math.max(0, Math.min(100, Math.round(Number(nextValue) || 0)))
+  const others = (['protein', 'carbs', 'fat'] as const).filter((key) => key !== changed)
+  const remaining = 100 - clamped
+  const first = current[others[0]]
+  const second = current[others[1]]
+  const sum = first + second
+  let nextFirst: number
+  let nextSecond: number
+  if (sum <= 0) {
+    nextFirst = Math.floor(remaining / 2)
+    nextSecond = remaining - nextFirst
+  } else {
+    nextFirst = Math.round((first / sum) * remaining)
+    nextSecond = remaining - nextFirst
+  }
+  return {
+    protein: changed === 'protein' ? clamped : others[0] === 'protein' ? nextFirst : nextSecond,
+    carbs: changed === 'carbs' ? clamped : others[0] === 'carbs' ? nextFirst : nextSecond,
+    fat: changed === 'fat' ? clamped : others[0] === 'fat' ? nextFirst : nextSecond,
+  }
+}
+
+function macroGrams(calories: number, proteinPct: number, carbsPct: number) {
+  const protein = Math.round((calories * proteinPct) / 100 / 4)
+  const carbs = Math.round((calories * carbsPct) / 100 / 4)
+  const remainingKcal = Math.max(0, calories - protein * 4 - carbs * 4)
+  return { protein, carbs, fat: Math.round(remainingKcal / 9) }
 }
 
 interface ShoppingItem {
@@ -230,7 +269,7 @@ export function CreateDietPlan() {
   const [shoppingDays, setShoppingDays] = useState(30);
 
   const [meals, setMeals] = useState<Meal[]>(
-    defaultMeals.map((m) => ({ ...m, foods: [] }))
+    defaultMeals.map((m) => ({ ...m, notes: '', foods: [] }))
   );
   const [activeMeal, setActiveMeal] = useState<string | null>('meal1');
   const [foodSearch, setFoodSearch] = useState('');
@@ -357,35 +396,40 @@ export function CreateDietPlan() {
         setPlanName(doc.title)
         setNotes(doc.observations || '')
         setSelectedPatient(relId(doc.student) || patientId || '')
-        const loaded = defaultMeals.map((slot) => {
-          const match = (doc.meals || []).find((meal) => meal.name.toLowerCase() === slot.name.toLowerCase())
-          return {
-            ...slot,
-            time: match?.time || slot.time,
-            foods: (match?.items || []).map((item, index) => ({
-              id: item.id || `${slot.id}-${index}`,
-              food: resolveFood(item.name),
-              quantity: parseMealQuantity(item.quantity),
-            })),
-          }
-        })
-        const extras = (doc.meals || []).filter(
-          (meal) => !defaultMeals.some((slot) => slot.name.toLowerCase() === meal.name.toLowerCase()),
-        )
-        setMeals([
-          ...loaded,
-          ...extras.map((meal, index) => ({
-            id: meal.id || `extra-${index}`,
+        if (typeof doc.caloriesTarget === 'number' && doc.caloriesTarget > 0) {
+          setTargetCalories(Math.round(doc.caloriesTarget))
+        }
+        if (
+          typeof doc.proteinPercent === 'number' &&
+          typeof doc.carbsPercent === 'number' &&
+          typeof doc.fatPercent === 'number'
+        ) {
+          setProteinPct(Math.round(doc.proteinPercent))
+          setCarbsPct(Math.round(doc.carbsPercent))
+          setFatPct(Math.round(doc.fatPercent))
+        }
+        if (typeof doc.durationWeeks === 'number' && doc.durationWeeks > 0) {
+          setDuration(Math.round(doc.durationWeeks))
+        }
+        const savedMeals = doc.meals || []
+        if (savedMeals.length === 0) {
+          setMeals(defaultMeals.map((slot) => ({ ...slot, notes: '', foods: [] })))
+        } else {
+          const nextMeals = savedMeals.map((meal, index) => ({
+            id: meal.id || `saved-${index}`,
             name: meal.name,
             time: meal.time || '12:00',
-            icon: '🍽️',
+            icon: defaultMeals[index]?.icon || '🍽️',
+            notes: meal.notes || '',
             foods: (meal.items || []).map((item, itemIndex) => ({
-              id: item.id || `extra-${index}-${itemIndex}`,
+              id: item.id || `saved-${index}-${itemIndex}`,
               food: resolveFood(item.name),
               quantity: parseMealQuantity(item.quantity),
             })),
-          })),
-        ])
+          }))
+          setMeals(nextMeals)
+          setActiveMeal(nextMeals[0]?.id || null)
+        }
       })
       .catch(() => toast.error('Não foi possível abrir o plano.'))
   }, [user?.accessToken, planId, patientId])
@@ -395,23 +439,36 @@ export function CreateDietPlan() {
       toast.error('Preencha o nome do plano e selecione um paciente')
       return
     }
+    if (!Number.isFinite(targetCalories) || targetCalories <= 0) {
+      toast.error('Informe uma meta calórica maior que zero.')
+      return
+    }
+    const namedMeals = meals.filter((meal) => meal.name.trim())
+    if (namedMeals.length === 0) {
+      toast.error('Adicione pelo menos uma refeição.')
+      return
+    }
     const payload = {
       student: selectedPatient,
       title: planName.trim(),
       observations: notes.trim() || null,
       status: 'published' as const,
-      meals: meals
-        .filter((meal) => meal.foods.length > 0)
-        .map((meal) => ({
-          name: meal.name,
-          time: meal.time,
-          calories: meal.foods.reduce((sum, item) => sum + Math.round((item.food.calories * item.quantity) / 100), 0),
-          items: meal.foods.map((item) => ({
-            name: item.food.name,
-            quantity: `${item.quantity}${item.food.unit}`,
-            calories: Math.round((item.food.calories * item.quantity) / 100),
-          })),
+      caloriesTarget: Math.round(targetCalories),
+      proteinPercent: proteinPct,
+      carbsPercent: carbsPct,
+      fatPercent: fatPct,
+      durationWeeks: duration,
+      meals: namedMeals.map((meal) => ({
+        name: meal.name.trim(),
+        time: meal.time,
+        notes: meal.notes.trim() || null,
+        calories: meal.foods.reduce((sum, item) => sum + Math.round((item.food.calories * item.quantity) / 100), 0),
+        items: meal.foods.map((item) => ({
+          name: item.food.name,
+          quantity: `${item.quantity}${item.food.unit}`,
+          calories: Math.round((item.food.calories * item.quantity) / 100),
         })),
+      })),
     }
     setSaving(true)
     try {
@@ -436,9 +493,55 @@ export function CreateDietPlan() {
     }
   }
 
-  const proteinTarget = Math.round((targetCalories * proteinPct) / 100 / 4);
-  const carbsTarget = Math.round((targetCalories * carbsPct) / 100 / 4);
-  const fatTarget = Math.round((targetCalories * fatPct) / 100 / 9);
+  const setMacro = (key: MacroKey, value: number) => {
+    const next = redistributeMacros({ protein: proteinPct, carbs: carbsPct, fat: fatPct }, key, value)
+    setProteinPct(next.protein)
+    setCarbsPct(next.carbs)
+    setFatPct(next.fat)
+  }
+
+  const addMeal = () => {
+    const id = `meal-${Date.now()}`
+    setMeals((prev) => [
+      ...prev,
+      { id, name: `Refeição ${prev.length + 1}`, time: '12:00', icon: '🍽️', notes: '', foods: [] },
+    ])
+    setActiveMeal(id)
+  }
+
+  const removeMeal = (mealId: string) => {
+    setMeals((prev) => {
+      if (prev.length <= 1) return prev
+      const next = prev.filter((meal) => meal.id !== mealId)
+      if (activeMeal === mealId) setActiveMeal(next[0]?.id || null)
+      return next
+    })
+  }
+
+  const moveMeal = (mealId: string, direction: -1 | 1) => {
+    setMeals((prev) => {
+      const index = prev.findIndex((meal) => meal.id === mealId)
+      const nextIndex = index + direction
+      if (index < 0 || nextIndex < 0 || nextIndex >= prev.length) return prev
+      const copy = [...prev]
+      const [item] = copy.splice(index, 1)
+      copy.splice(nextIndex, 0, item)
+      return copy
+    })
+  }
+
+  const updateMeal = (mealId: string, patch: Partial<Pick<Meal, 'name' | 'time' | 'notes'>>) => {
+    setMeals((prev) => prev.map((meal) => (meal.id === mealId ? { ...meal, ...patch } : meal)))
+  }
+
+  const grams = macroGrams(targetCalories, proteinPct, carbsPct)
+  const proteinTarget = grams.protein
+  const carbsTarget = grams.carbs
+  const fatTarget = grams.fat
+  const calorieWarning =
+    targetCalories > 0 && (targetCalories < 1200 || targetCalories > 4000)
+      ? 'Valor fora da faixa usual (1200–4000 kcal). Confirme se está adequado para o paciente.'
+      : null
 
   return (
     <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
@@ -501,7 +604,11 @@ export function CreateDietPlan() {
                   <select value={selectedPatient} onChange={(e) => setSelectedPatient(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
                     <option value="">Selecione...</option>
-                    {patients.map((p) => <option key={p.userId} value={p.userId}>{p.name}</option>)}
+                    {patients.map((p) => (
+                      <option key={p.userId} value={p.userId}>
+                        {p.name} · {p.email} · {p.userId}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -524,40 +631,66 @@ export function CreateDietPlan() {
             <h3 className="dark:text-white text-slate-900 mb-4 text-sm" style={{ fontWeight: 600 }}>Meta Calórica Diária</h3>
             <div className="text-center mb-4">
               <div className="flex items-center justify-center gap-3">
-                <button onClick={() => setTargetCalories((v) => Math.max(1200, v - 50))}
+                <button type="button" onClick={() => setTargetCalories((v) => Math.max(1, v - 50))}
                   className="w-8 h-8 rounded-lg dark:bg-zinc-800 bg-slate-100 dark:text-zinc-400 text-slate-600 hover:dark:bg-zinc-700 flex items-center justify-center text-xl transition-colors">−</button>
                 <div>
-                  <p className="text-3xl text-amber-500" style={{ fontWeight: 800 }}>{targetCalories}</p>
+                  <input
+                    type="number"
+                    min={1}
+                    value={targetCalories}
+                    onChange={(e) => setTargetCalories(Number(e.target.value))}
+                    className="w-28 text-center text-3xl text-amber-500 bg-transparent border-b dark:border-zinc-700 border-slate-200 focus:outline-none"
+                    style={{ fontWeight: 800 }}
+                  />
                   <p className="text-xs dark:text-zinc-500 text-slate-400">kcal / dia</p>
                 </div>
-                <button onClick={() => setTargetCalories((v) => Math.min(4000, v + 50))}
+                <button type="button" onClick={() => setTargetCalories((v) => v + 50)}
                   className="w-8 h-8 rounded-lg dark:bg-zinc-800 bg-slate-100 dark:text-zinc-400 text-slate-600 hover:dark:bg-zinc-700 flex items-center justify-center text-xl transition-colors">+</button>
               </div>
             </div>
-            <input type="range" min={1200} max={4000} step={50} value={targetCalories} onChange={(e) => setTargetCalories(Number(e.target.value))} className="w-full accent-amber-500" />
-            <div className="flex justify-between text-xs dark:text-zinc-600 text-slate-400 mt-1"><span>1200</span><span>4000</span></div>
+            <input
+              type="range"
+              min={800}
+              max={6000}
+              step={50}
+              value={Math.min(6000, Math.max(800, Number.isFinite(targetCalories) ? targetCalories : 1800))}
+              onChange={(e) => setTargetCalories(Number(e.target.value))}
+              className="w-full accent-amber-500"
+            />
+            <div className="flex justify-between text-xs dark:text-zinc-600 text-slate-400 mt-1"><span>800</span><span>6000</span></div>
+            {calorieWarning && <p className="mt-2 text-xs text-amber-600">{calorieWarning}</p>}
           </div>
 
           <div className="dark:bg-zinc-900 bg-white rounded-3xl p-5 dark:border-zinc-800 border border-slate-200">
             <h3 className="dark:text-white text-slate-900 mb-4 text-sm" style={{ fontWeight: 600 }}>Distribuição de Macros</h3>
             <div className="space-y-4">
               {[
-                { label: 'Proteína', value: proteinPct, setter: setProteinPct, color: '#3b82f6', gram: proteinTarget },
-                { label: 'Carboidrato', value: carbsPct, setter: setCarbsPct, color: '#f59e0b', gram: carbsTarget },
-                { label: 'Gordura', value: fatPct, setter: setFatPct, color: '#ec4899', gram: fatTarget },
-              ].map(({ label, value, setter, color, gram }) => (
+                { key: 'protein' as const, label: 'Proteína', value: proteinPct, color: '#3b82f6', gram: proteinTarget },
+                { key: 'carbs' as const, label: 'Carboidrato', value: carbsPct, color: '#f59e0b', gram: carbsTarget },
+                { key: 'fat' as const, label: 'Gordura', value: fatPct, color: '#ec4899', gram: fatTarget },
+              ].map(({ key, label, value, color, gram }) => (
                 <div key={label}>
                   <div className="flex justify-between mb-1">
                     <span className="text-xs dark:text-zinc-400 text-slate-500">{label}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs dark:text-zinc-500 text-slate-400">{gram}g</span>
-                      <span className="text-xs" style={{ fontWeight: 600, color }}>{value}%</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={value}
+                        onChange={(e) => setMacro(key, Number(e.target.value))}
+                        className="w-14 px-1 py-0.5 rounded text-xs text-right dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200"
+                        style={{ fontWeight: 600, color }}
+                      />
+                      <span className="text-xs" style={{ color }}>%</span>
                     </div>
                   </div>
-                  <input type="range" min={10} max={60} value={value} onChange={(e) => setter(Number(e.target.value))}
+                  <input type="range" min={0} max={100} value={value} onChange={(e) => setMacro(key, Number(e.target.value))}
                     className="w-full h-1.5 rounded-full appearance-none cursor-pointer" style={{ accentColor: color }} />
                 </div>
               ))}
+              <p className="text-xs dark:text-zinc-500 text-slate-400">Total {proteinPct + carbsPct + fatPct}% · 4 / 4 / 9 kcal por grama</p>
             </div>
             <div className="flex h-3 rounded-full overflow-hidden mt-4">
               <div className="bg-blue-500 transition-all" style={{ width: `${proteinPct}%` }} />
@@ -576,19 +709,25 @@ export function CreateDietPlan() {
         {/* ──── CENTER: Meal Builder ──── */}
         <div className="space-y-5">
           <div className="dark:bg-zinc-900 bg-white rounded-3xl p-5 dark:border-zinc-800 border border-slate-200">
-            <h3 className="dark:text-white text-slate-900 mb-4 text-sm" style={{ fontWeight: 600 }}>Refeições do Dia</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="dark:text-white text-slate-900 text-sm" style={{ fontWeight: 600 }}>Refeições do Dia</h3>
+              <button type="button" onClick={addMeal} className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500">
+                <Plus className="w-3.5 h-3.5" />
+                Nova refeição
+              </button>
+            </div>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
               {meals.map((meal) => {
                 const cal = Math.round(getMealCalories(meal));
                 return (
-                  <button key={meal.id} onClick={() => setActiveMeal(activeMeal === meal.id ? null : meal.id)}
+                  <button key={meal.id} type="button" onClick={() => setActiveMeal(activeMeal === meal.id ? null : meal.id)}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
                       activeMeal === meal.id ? 'border-amber-500/50 shadow-lg' : 'dark:bg-zinc-800/50 bg-slate-50 dark:border-zinc-700 border-slate-200 hover:dark:border-zinc-600'
                     }`}
                     style={activeMeal === meal.id ? { background: 'linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.15))', borderColor: '#f59e0b55' } : {}}>
                     <span className="text-xl">{meal.icon}</span>
                     <span className="text-xs dark:text-zinc-300 text-slate-700 text-center leading-tight" style={{ fontWeight: activeMeal === meal.id ? 600 : 400 }}>
-                      {meal.name.split(' ')[0]}
+                      {meal.name}
                     </span>
                     {cal > 0 && <span className="text-xs text-amber-500" style={{ fontWeight: 700 }}>{cal}</span>}
                   </button>
@@ -599,14 +738,48 @@ export function CreateDietPlan() {
 
           {activeMeal && (
             <div className="dark:bg-zinc-900 bg-white rounded-3xl p-5 dark:border-zinc-800 border border-slate-200">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
                 <h3 className="dark:text-white text-slate-900 text-sm" style={{ fontWeight: 600 }}>
-                  {meals.find((m) => m.id === activeMeal)?.icon} {meals.find((m) => m.id === activeMeal)?.name}
+                  {meals.find((m) => m.id === activeMeal)?.icon} Editar refeição
                 </h3>
-                <div className="flex items-center gap-1.5 text-xs dark:text-zinc-500 text-slate-400">
-                  <Clock className="w-3 h-3" />{meals.find((m) => m.id === activeMeal)?.time}
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => moveMeal(activeMeal, -1)} className="w-7 h-7 rounded-lg dark:bg-zinc-800 bg-slate-100 flex items-center justify-center">
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => moveMeal(activeMeal, 1)} className="w-7 h-7 rounded-lg dark:bg-zinc-800 bg-slate-100 flex items-center justify-center">
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => removeMeal(activeMeal)} className="w-7 h-7 rounded-lg dark:bg-red-500/10 bg-red-50 text-red-400 flex items-center justify-center">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
+              <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                <input
+                  type="text"
+                  value={meals.find((m) => m.id === activeMeal)?.name || ''}
+                  onChange={(e) => updateMeal(activeMeal, { name: e.target.value })}
+                  placeholder="Título da refeição"
+                  className="px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white"
+                />
+                <div className="relative">
+                  <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 dark:text-zinc-500 text-slate-400" />
+                  <input
+                    type="text"
+                    value={meals.find((m) => m.id === activeMeal)?.time || ''}
+                    onChange={(e) => updateMeal(activeMeal, { time: e.target.value })}
+                    placeholder="Horário"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white"
+                  />
+                </div>
+              </div>
+              <textarea
+                value={meals.find((m) => m.id === activeMeal)?.notes || ''}
+                onChange={(e) => updateMeal(activeMeal, { notes: e.target.value })}
+                placeholder="Observações desta refeição"
+                rows={2}
+                className="w-full mb-4 px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white resize-none"
+              />
               <div className="flex gap-3 mb-4">
                 <div className="flex-1 relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 dark:text-zinc-500 text-slate-400" />
