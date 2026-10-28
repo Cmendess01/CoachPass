@@ -48,6 +48,10 @@ export type LinkedPerson = {
   avatar: string
 }
 
+export function linkedPersonLabel(person: Pick<LinkedPerson, 'name' | 'email' | 'userId'>): string {
+  return [person.name, person.email, person.userId].filter(Boolean).join(' · ')
+}
+
 type ListResponse<T> = { docs: T[]; totalDocs: number }
 
 type LinkDoc = {
@@ -294,6 +298,30 @@ export async function updateWorkout(
     },
     token,
   )
+}
+
+export async function fetchMyWorkouts(token: string): Promise<WorkoutDoc[]> {
+  const data = await getJson<ListResponse<WorkoutDoc>>(
+    `${WORKOUTS_API}${qs({
+      depth: 1,
+      limit: 50,
+      sort: '-updatedAt',
+    })}`,
+    token,
+  )
+  return data.docs
+}
+
+export async function updateWorkoutStatus(
+  id: string,
+  status: 'draft' | 'published',
+  token: string,
+): Promise<WorkoutDoc> {
+  return patchJson<WorkoutDoc>(`${WORKOUTS_API}/${id}`, { status }, token)
+}
+
+export async function deleteWorkout(id: string, token: string): Promise<void> {
+  await deleteJson<unknown>(`${WORKOUTS_API}/${id}`, token)
 }
 
 export async function fetchWorkoutsForStudent(studentId: string, token: string): Promise<WorkoutDoc[]> {

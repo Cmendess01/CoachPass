@@ -6,13 +6,42 @@ import {
   createAssessment,
   fetchAssessmentsForStudent,
   fetchLinkedPeople,
+  linkedPersonLabel,
   type AssessmentDoc,
   type LinkedPerson,
 } from '../../lib/professionalApi'
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
+import { formatLocalDate, localDateToIso, todayLocalDate } from '../../lib/localDate'
 
 const input =
   'w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
+
+function optionalNumber(value: string): number | undefined {
+  if (!value.trim()) return undefined
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function optionalMeasures(values: Record<string, string>): Record<string, number> | undefined {
+  const next: Record<string, number> = {}
+  for (const [key, value] of Object.entries(values)) {
+    const parsed = optionalNumber(value)
+    if (parsed !== undefined) next[key] = parsed
+  }
+  return Object.keys(next).length ? next : undefined
+}
+
+function circumferenceSummary(values: AssessmentDoc['circumferences']): string {
+  if (!values) return ''
+  const parts = [
+    values.chest != null ? `tórax ${values.chest}` : '',
+    values.waist != null ? `cintura ${values.waist}` : '',
+    values.hip != null ? `quadril ${values.hip}` : '',
+    values.arm != null ? `braço ${values.arm}` : '',
+    values.thigh != null ? `coxa ${values.thigh}` : '',
+  ].filter(Boolean)
+  return parts.length ? ` · ${parts.join(', ')} cm` : ''
+}
 
 export function PersonalAvaliacao() {
   const { studentId } = useParams<{ studentId: string }>()
@@ -20,9 +49,14 @@ export function PersonalAvaliacao() {
   const { user } = useAuth()
   const [students, setStudents] = useState<LinkedPerson[]>([])
   const [student, setStudent] = useState(studentId || '')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(todayLocalDate())
   const [weightKg, setWeightKg] = useState('')
   const [bodyFatPercent, setBodyFatPercent] = useState('')
+  const [chest, setChest] = useState('')
+  const [waist, setWaist] = useState('')
+  const [hip, setHip] = useState('')
+  const [arm, setArm] = useState('')
+  const [thigh, setThigh] = useState('')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<AssessmentDoc[]>([])
   const [saving, setSaving] = useState(false)
@@ -54,13 +88,15 @@ export function PersonalAvaliacao() {
     }
     setSaving(true)
     try {
+      const circumferences = optionalMeasures({ chest, waist, hip, arm, thigh })
       await createAssessment(
         {
           kind: 'physical',
           student,
-          date: new Date(date).toISOString(),
-          weightKg: weightKg ? Number(weightKg) : undefined,
-          bodyFatPercent: bodyFatPercent ? Number(bodyFatPercent) : undefined,
+          date: localDateToIso(date),
+          weightKg: optionalNumber(weightKg),
+          bodyFatPercent: optionalNumber(bodyFatPercent),
+          ...(circumferences ? { circumferences } : {}),
           notes: notes.trim() || undefined,
         },
         user.accessToken,
@@ -91,13 +127,20 @@ export function PersonalAvaliacao() {
           <option value="">Selecione o aluno</option>
           {students.map((row) => (
             <option key={row.userId} value={row.userId}>
-              {row.name}
+              {linkedPersonLabel(row)}
             </option>
           ))}
         </select>
         <input className={input} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <input className={input} type="number" placeholder="Peso (kg)" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} />
         <input className={input} type="number" placeholder="% gordura" value={bodyFatPercent} onChange={(e) => setBodyFatPercent(e.target.value)} />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <input className={input} type="number" min="0" step="0.1" placeholder="Tórax (cm)" value={chest} onChange={(e) => setChest(e.target.value)} aria-label="Tórax em centímetros" />
+          <input className={input} type="number" min="0" step="0.1" placeholder="Cintura (cm)" value={waist} onChange={(e) => setWaist(e.target.value)} aria-label="Cintura em centímetros" />
+          <input className={input} type="number" min="0" step="0.1" placeholder="Quadril (cm)" value={hip} onChange={(e) => setHip(e.target.value)} aria-label="Quadril em centímetros" />
+          <input className={input} type="number" min="0" step="0.1" placeholder="Braço (cm)" value={arm} onChange={(e) => setArm(e.target.value)} aria-label="Braço em centímetros" />
+          <input className={input} type="number" min="0" step="0.1" placeholder="Coxa (cm)" value={thigh} onChange={(e) => setThigh(e.target.value)} aria-label="Coxa em centímetros" />
+        </div>
         <textarea className={input} rows={3} placeholder="Observações" value={notes} onChange={(e) => setNotes(e.target.value)} />
         <div className="flex gap-2">
           <button
@@ -121,9 +164,10 @@ export function PersonalAvaliacao() {
           <ul className="space-y-2 text-sm dark:text-zinc-200">
             {items.map((item) => (
               <li key={item.id}>
-                {new Date(item.date).toLocaleDateString('pt-BR')}
+                {formatLocalDate(item.date)}
                 {item.weightKg != null ? ` · ${item.weightKg} kg` : ''}
                 {item.bodyFatPercent != null ? ` · ${item.bodyFatPercent}%` : ''}
+                {circumferenceSummary(item.circumferences)}
               </li>
             ))}
           </ul>

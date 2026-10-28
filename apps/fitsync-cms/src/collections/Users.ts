@@ -5,7 +5,7 @@ import { linkedStudentIds } from '../access/links'
 import { isSuperUser } from '../access/isSuper'
 import { userId, userRole } from '../access/roles'
 import { getPasswordErrors, type PasswordContext } from '../lib/passwordPolicy'
-import { isValidCrn } from '../web/lib/credentials'
+import { isValidCref, isValidCrn } from '../web/lib/credentials'
 
 const PASSWORD_OPERATIONS = new Set(['create', 'update', 'resetPassword'])
 const SELF_SERVICE_ROLES = new Set(['student', 'personal', 'nutritionist'])
@@ -215,6 +215,17 @@ export const Users: CollectionConfig = {
           throw new ValidationError({
             collection: collection?.slug,
             errors: [{ path: 'professionalId', message: 'Informe o CRN no formato CRN-3 12345.' }],
+          })
+        }
+        if (
+          role === 'personal' &&
+          nextProfessionalId &&
+          nextProfessionalId !== previousProfessionalId &&
+          !isValidCref(nextProfessionalId)
+        ) {
+          throw new ValidationError({
+            collection: collection?.slug,
+            errors: [{ path: 'professionalId', message: 'Informe o CREF no formato 123456-G/DF.' }],
           })
         }
 

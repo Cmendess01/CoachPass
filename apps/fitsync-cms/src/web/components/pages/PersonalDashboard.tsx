@@ -64,7 +64,8 @@ export function PersonalDashboard() {
   const filtered = students.filter(
     (student) =>
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.userId.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
@@ -157,7 +158,9 @@ export function PersonalDashboard() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium dark:text-white text-slate-900">{student.name}</p>
                   <p className="text-xs dark:text-zinc-500 text-slate-400 truncate">
-                    {student.email || (student.status === 'pending' ? 'Aguardando aceite' : 'Aluno vinculado')}
+                    {student.status === 'pending'
+                      ? `Aguardando aceite · ${student.email || 'sem e-mail'} · ${student.userId}`
+                      : `${student.email || 'Aluno vinculado'} · ${student.userId}`}
                   </p>
                 </div>
                 <span className="text-xs dark:text-zinc-400 text-slate-500">

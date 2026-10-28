@@ -18,7 +18,7 @@ import { uploadProfilePhoto } from '../../lib/studentApi';
 import { AuthedImage } from '../AuthedImage';
 import { PayloadApiError, extractPayloadMessage, USERS_API, postJson } from '@/lib/cms';
 import { formatPhone } from '../../lib/phone';
-import { formatCrn, isValidCrn, isValidWhatsapp } from '../../lib/credentials';
+import { formatCref, formatCrn, isValidCref, isValidCrn, isValidWhatsapp } from '../../lib/credentials';
 
 type SettingsTab = 'profile' | 'notifications' | 'privacy' | 'security' | 'data';
 
@@ -195,6 +195,14 @@ export function Settings() {
       !isValidCrn(profileForm.professionalId)
     ) {
       toast.error('Informe o CRN no formato CRN-3 12345.')
+      return
+    }
+    if (
+      user.role === 'personal' &&
+      profileForm.professionalId.trim() &&
+      !isValidCref(profileForm.professionalId)
+    ) {
+      toast.error('Informe o CREF no formato 123456-G/DF.')
       return
     }
     setSaving(true)
@@ -452,7 +460,7 @@ export function Settings() {
                         { label: 'Nome Completo', field: 'name', icon: User, placeholder: 'Seu nome' },
                         { label: 'E-mail', field: 'email', icon: Mail, placeholder: 'seu@gmail.com', disabled: true },
                         { label: 'WhatsApp', field: 'whatsapp', icon: Phone, placeholder: '(61) 99999-9999' },
-                        ...(user?.role !== 'student' ? [{ label: user?.role === 'personal' ? 'CREF' : 'CRN', field: 'professionalId', icon: Activity, placeholder: user?.role === 'personal' ? 'CREF 123456-G/SP' : 'CRN-3 12345' }] : []),
+                        ...(user?.role !== 'student' ? [{ label: user?.role === 'personal' ? 'CREF' : 'CRN', field: 'professionalId', icon: Activity, placeholder: user?.role === 'personal' ? '123456-G/DF' : 'CRN-3 12345' }] : []),
                         { label: 'Cidade', field: 'city', icon: Globe, placeholder: 'São Paulo, SP' },
                         { label: 'Instagram', field: 'instagram', icon: Star, placeholder: '@seuperfil' },
                       ].map(({ label, field, icon: Icon, placeholder, disabled }) => (
@@ -472,7 +480,9 @@ export function Settings() {
                                     ? formatPhone(raw)
                                     : field === 'professionalId' && user?.role === 'nutritionist'
                                       ? formatCrn(raw)
-                                      : raw
+                                      : field === 'professionalId' && user?.role === 'personal'
+                                        ? formatCref(raw)
+                                        : raw
                                 setProfileForm((p) => ({ ...p, [field]: next }))
                               }}
                               placeholder={placeholder}

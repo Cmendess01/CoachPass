@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { useAuth, UserRole } from '../../context/AuthContext'
 import { USERS_API, patchJson, postJson, PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 import { formatPhone } from '../../lib/phone'
-import { formatCrn, isValidCrn, isValidWhatsapp } from '../../lib/credentials'
+import { formatCref, formatCrn, isValidCref, isValidCrn, isValidWhatsapp } from '../../lib/credentials'
 
 type ProfessionalType = 'personal' | 'nutritionist'
 
@@ -29,6 +29,10 @@ export function ProfessionalOnboarding() {
     if (!data.professionalType || !data.credential.trim()) return
     if (data.professionalType === 'nutritionist' && !isValidCrn(data.credential)) {
       toast.error('Informe o CRN no formato CRN-3 12345.')
+      return
+    }
+    if (data.professionalType === 'personal' && !isValidCref(data.credential)) {
+      toast.error('Informe o CREF no formato 123456-G/DF.')
       return
     }
     if (data.phone.trim() && !isValidWhatsapp(data.phone)) {
@@ -199,11 +203,11 @@ export function ProfessionalOnboarding() {
                         credential:
                           data.professionalType === 'nutritionist'
                             ? formatCrn(e.target.value)
-                            : e.target.value,
+                            : formatCref(e.target.value),
                       })
                     }
                     placeholder={
-                      data.professionalType === 'nutritionist' ? 'CRN-3 12345' : 'Número de registro'
+                      data.professionalType === 'nutritionist' ? 'CRN-3 12345' : '123456-G/DF'
                     }
                     className="w-full pl-10 pr-4 py-3 rounded-lg dark:bg-zinc-900/50 bg-slate-50/50 border dark:border-zinc-800 border-slate-200 dark:text-white text-slate-900 focus:border-blue-500 font-light"
                   />

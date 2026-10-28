@@ -25,13 +25,17 @@ import { useAuth } from '../../context/AuthContext';
 import {
   WEEKDAYS,
   createWorkout,
+  deleteWorkout,
   fetchLinkedPeople,
+  fetchMyWorkouts,
   fetchWorkoutById,
+  linkedPersonLabel,
   updateWorkout,
+  updateWorkoutStatus,
   type LinkedPerson,
   type Weekday,
 } from '../../lib/professionalApi';
-import { relId } from '../../lib/studentApi';
+import { relId, relName, type WorkoutDoc } from '../../lib/studentApi';
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms';
 
 interface WorkoutExercise {
@@ -72,6 +76,14 @@ export function CreateWorkout() {
   const [selectedMuscle, setSelectedMuscle] = useState('Peito');
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [myWorkouts, setMyWorkouts] = useState<WorkoutDoc[]>([]);
+  const [workoutAction, setWorkoutAction] = useState<string | null>(null);
+
+  const reloadMyWorkouts = async () => {
+    if (!user?.accessToken) return
+    const docs = await fetchMyWorkouts(user.accessToken)
+    setMyWorkouts(docs)
+  }
 
   const handleAddExercise = (exercise: Exercise) => {
     const newExercise: WorkoutExercise = {
@@ -95,12 +107,56 @@ export function CreateWorkout() {
     if (detail) setSelectedExerciseDetail(detail);
   };
 
+  const handleArchiveWorkout = async (id: string) => {
+    if (!user?.accessToken) return
+    setWorkoutAction(id)
+    try {
+      await updateWorkoutStatus(id, 'draft', user.accessToken)
+      toast.success('Treino arquivado. O aluno deixa de vê-lo.')
+      await reloadMyWorkouts()
+    } catch (err) {
+      const msg =
+        err instanceof PayloadApiError
+          ? extractPayloadMessage(err.data) || err.message
+          : 'Não foi possível arquivar o treino.'
+      toast.error(msg)
+    } finally {
+      setWorkoutAction(null)
+    }
+  }
+
+  const handleDeleteWorkout = async (workout: WorkoutDoc) => {
+    if (!user?.accessToken) return
+    if (!window.confirm(`Excluir o treino “${workout.title}”? Essa ação não pode ser desfeita.`)) return
+    setWorkoutAction(workout.id)
+    try {
+      await deleteWorkout(workout.id, user.accessToken)
+      toast.success('Treino excluído.')
+      await reloadMyWorkouts()
+    } catch (err) {
+      const msg =
+        err instanceof PayloadApiError
+          ? extractPayloadMessage(err.data) || err.message
+          : 'Não foi possível excluir o treino.'
+      toast.error(msg)
+    } finally {
+      setWorkoutAction(null)
+    }
+  }
+
   useEffect(() => {
     if (!user?.accessToken || !user.id) return
     fetchLinkedPeople(user.id, 'personal', user.accessToken, 'active')
       .then(setStudents)
       .catch(() => toast.error('Não foi possível carregar os alunos vinculados.'))
   }, [user?.accessToken, user?.id])
+
+  useEffect(() => {
+    if (!user?.accessToken) return
+    fetchMyWorkouts(user.accessToken)
+      .then(setMyWorkouts)
+      .catch(() => toast.error('Não foi possível carregar seus treinos.'))
+  }, [user?.accessToken])
 
   useEffect(() => {
     if (!user?.accessToken || !workoutId) return
@@ -193,6 +249,71 @@ export function CreateWorkout() {
         </p>
       </div>
 
+      <section className="mb-8 dark:bg-zinc-900 bg-white rounded-3xl p-5 dark:border-zinc-800 border border-slate-200">
+        <h2 className="text-sm dark:text-white text-slate-900 mb-3" style={{ fontWeight: 600 }}>
+          Meus treinos
+        </h2>
+        {myWorkouts.length === 0 ? (
+          <p className="text-sm dark:text-zinc-400 text-slate-500">Nenhum treino ainda.</p>
+        ) : (
+          <ul className="divide-y dark:divide-zinc-800 divide-slate-200">
+            {myWorkouts.map((workout) => {
+              const studentId = relId(workout.student)
+              const day = WEEKDAYS.find((item) => item.id === workout.weekday)?.label
+              const busy = workoutAction === workout.id
+              return (
+                <li key={workout.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm dark:text-white text-slate-900" style={{ fontWeight: 600 }}>
+                      {workout.title}
+                    </p>
+                    <p className="text-xs dark:text-zinc-400 text-slate-500 truncate">
+                      {relName(workout.student, 'Aluno')}
+                      {studentId ? ` · ${studentId}` : ''}
+                      {day ? ` · ${day}` : ''}
+                      {' · '}
+                      {workout.status === 'published' ? 'Publicado' : 'Arquivado'}
+                    </p>
+                  </div>
+                  <div className="flex gap-3 text-xs">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        navigate(
+                          `/personal/criar-treino?id=${workout.id}${studentId ? `&student=${studentId}` : ''}`,
+                        )
+                      }
+                      className="underline dark:text-zinc-200 text-slate-700 disabled:opacity-50"
+                    >
+                      Editar
+                    </button>
+                    {workout.status === 'published' && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void handleArchiveWorkout(workout.id)}
+                        className="underline dark:text-zinc-200 text-slate-700 disabled:opacity-50"
+                      >
+                        Arquivar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleDeleteWorkout(workout)}
+                      className="underline text-red-500 disabled:opacity-50"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
       <div className="grid lg:grid-cols-[280px,1fr,320px] gap-6">
         {/* Left Sidebar - Muscle Groups */}
         <div className="space-y-6">
@@ -224,7 +345,7 @@ export function CreateWorkout() {
                   <option value="">Selecione...</option>
                   {students.map((student) => (
                     <option key={student.userId} value={student.userId}>
-                      {student.name}
+                      {linkedPersonLabel(student)}
                     </option>
                   ))}
                 </select>

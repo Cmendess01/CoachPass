@@ -5,11 +5,14 @@ import {
   createSession,
   fetchLinkedPeople,
   fetchSessions,
+  linkedPersonLabel,
   updateSession,
   type LinkedPerson,
   type SessionDoc,
 } from '../../lib/professionalApi'
+import { relName } from '../../lib/studentApi'
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
+import { formatLocalDate, localDateInputValue, localDateToIso, todayLocalDate } from '../../lib/localDate'
 
 const input =
   'w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
@@ -21,12 +24,44 @@ const typeLabel: Record<SessionDoc['type'], string> = {
   followup: 'Retorno',
 }
 
+const compact =
+  'px-2 py-1 rounded-lg text-xs dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
+
+function SessionReschedule({
+  session,
+  onStatus,
+  onReschedule,
+}: {
+  session: SessionDoc
+  onStatus: (status: SessionDoc['status']) => void
+  onReschedule: (date: string, time: string) => void
+}) {
+  const [date, setDate] = useState(localDateInputValue(session.date))
+  const [time, setTime] = useState(session.time || '08:00')
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <input className={compact} type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Nova data" />
+      <input className={compact} type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Novo horário" />
+      <button type="button" onClick={() => onReschedule(date, time)} className="underline">
+        Reagendar
+      </button>
+      <button type="button" onClick={() => onStatus('completed')} className="underline">
+        Concluir
+      </button>
+      <button type="button" onClick={() => onStatus('cancelled')} className="text-red-500 underline">
+        Cancelar
+      </button>
+    </div>
+  )
+}
+
 export function PersonalAgenda() {
   const { user } = useAuth()
   const [students, setStudents] = useState<LinkedPerson[]>([])
   const [sessions, setSessions] = useState<SessionDoc[]>([])
   const [student, setStudent] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(todayLocalDate())
   const [time, setTime] = useState('08:00')
   const [type, setType] = useState<SessionDoc['type']>('training')
   const [saving, setSaving] = useState(false)
@@ -54,7 +89,7 @@ export function PersonalAgenda() {
     setSaving(true)
     try {
       await createSession(
-        { student, date: new Date(date).toISOString(), time, type, status: 'scheduled' },
+        { student, date: localDateToIso(date), time, type, status: 'scheduled' },
         user.accessToken,
       )
       toast.success('Sessão agendada.')
@@ -65,6 +100,17 @@ export function PersonalAgenda() {
       )
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleReschedule = async (id: string, nextDate: string, nextTime: string) => {
+    if (!user?.accessToken || !nextDate || !nextTime) return
+    try {
+      await updateSession(id, { date: localDateToIso(nextDate), time: nextTime }, user.accessToken)
+      toast.success('Sessão reagendada.')
+      await reload()
+    } catch {
+      toast.error('Não foi possível reagendar a sessão.')
     }
   }
 
@@ -89,7 +135,7 @@ export function PersonalAgenda() {
           <option value="">Aluno</option>
           {students.map((row) => (
             <option key={row.userId} value={row.userId}>
-              {row.name}
+              {linkedPersonLabel(row)}
             </option>
           ))}
         </select>
@@ -118,20 +164,23 @@ export function PersonalAgenda() {
           <p className="p-5 text-sm dark:text-zinc-400">Nenhuma sessão.</p>
         ) : (
           sessions.map((session) => (
-            <div key={session.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-3 border-b last:border-b-0 dark:border-zinc-800">
-              <div className="flex-1 text-sm dark:text-white">
-                {new Date(session.date).toLocaleDateString('pt-BR')} {session.time || ''}
-                <span className="text-xs dark:text-zinc-400"> · {typeLabel[session.type]} · {session.status}</span>
+            <div key={session.id} className="flex flex-col gap-2 px-4 py-3 border-b last:border-b-0 dark:border-zinc-800">
+              <div className="text-sm dark:text-white">
+                {formatLocalDate(session.date)} {session.time || ''}
+                <span className="text-xs dark:text-zinc-400">
+                  {' · '}
+                  {relName(session.student, 'Aluno')}
+                  {' · '}
+                  {typeLabel[session.type]} · {session.status}
+                </span>
               </div>
               {session.status === 'scheduled' && (
-                <div className="flex gap-2 text-xs">
-                  <button type="button" onClick={() => void handleStatus(session.id, 'completed')} className="underline">
-                    Concluir
-                  </button>
-                  <button type="button" onClick={() => void handleStatus(session.id, 'cancelled')} className="text-red-500 underline">
-                    Cancelar
-                  </button>
-                </div>
+                <SessionReschedule
+                  key={`${session.id}-${session.date}-${session.time || ''}`}
+                  session={session}
+                  onStatus={(status) => void handleStatus(session.id, status)}
+                  onReschedule={(nextDate, nextTime) => void handleReschedule(session.id, nextDate, nextTime)}
+                />
               )}
             </div>
           ))

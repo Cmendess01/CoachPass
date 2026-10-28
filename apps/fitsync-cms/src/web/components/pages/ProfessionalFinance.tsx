@@ -5,12 +5,14 @@ import {
   createTransaction,
   fetchLinkedPeople,
   fetchTransactions,
+  linkedPersonLabel,
   updateTransaction,
   type LinkedPerson,
   type TransactionDoc,
 } from '../../lib/professionalApi'
 import { relName } from '../../lib/studentApi'
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
+import { localDateToIso, todayLocalDate } from '../../lib/localDate'
 
 const card = 'rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5'
 
@@ -28,7 +30,7 @@ export function ProfessionalFinance() {
   const [student, setStudent] = useState('')
   const [description, setDescription] = useState('Mensalidade')
   const [amount, setAmount] = useState('150')
-  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10))
+  const [dueDate, setDueDate] = useState(todayLocalDate())
   const [saving, setSaving] = useState(false)
 
   const reload = async () => {
@@ -61,7 +63,7 @@ export function ProfessionalFinance() {
           amount: Number(amount),
           kind: 'charge',
           status: 'pending',
-          dueDate: new Date(dueDate).toISOString(),
+          dueDate: localDateToIso(dueDate),
         },
         user.accessToken,
       )
@@ -95,7 +97,7 @@ export function ProfessionalFinance() {
           <option value="">Aluno ou paciente</option>
           {people.map((row) => (
             <option key={row.userId} value={row.userId}>
-              {row.name}
+              {linkedPersonLabel(row)}
             </option>
           ))}
         </select>
