@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { fetchTransactions, type TransactionDoc } from '../../lib/professionalApi'
 
-const card = 'rounded-2xl border border-[#000326]/10 bg-white p-5 dark:border-white/10 dark:bg-[#000346]'
+const card = 'cp-panel p-5'
 
 const statusLabel: Record<TransactionDoc['status'], string> = {
   pending: 'Pendente',
@@ -24,9 +24,9 @@ export function StudentFinance() {
   }, [user?.accessToken])
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#000326] dark:text-white">Pagamentos</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Pagamentos</h1>
         <p className="mt-1 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
           Lançamentos do seu personal ou nutri. O app continua liberado; cobrança automática vem depois.
         </p>

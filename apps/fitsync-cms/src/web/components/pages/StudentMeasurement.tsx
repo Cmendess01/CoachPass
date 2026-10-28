@@ -9,5 +9,5 @@ export function StudentMeasurement() {
     navigate(id ? `/personal/avaliacao/${id}` : '/personal/avaliacao', { replace: true })
   }, [id, navigate])
 
-  return <p className="p-8 text-sm dark:text-zinc-400">Abrindo avaliação física…</p>
+  return <p className="px-8 pt-10 text-sm text-[var(--muted)]">Abrindo avaliação física…</p>
 }

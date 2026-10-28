@@ -20,9 +20,9 @@ import { AuthedImage } from '../AuthedImage'
 import { USERS_API, patchJson, PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 
 const card =
-  'rounded-2xl border border-[#000326]/10 bg-white p-5 dark:border-white/10 dark:bg-[#000346]'
+  'cp-panel p-5'
 const inputCls =
-  'w-full px-3 py-2.5 rounded-lg bg-[#f3f4f9] border border-[#000326]/10 text-[#000326] dark:bg-[#000137] dark:border-white/10 dark:text-white text-sm'
+  'cp-field cp-field-plain text-sm'
 
 const equipmentOptions: { value: EquipmentAccess; label: string }[] = [
   { value: 'full_gym', label: 'Academia completa' },
@@ -215,9 +215,9 @@ export function StudentProfileEditor() {
   const age = ageFromBirthDate(form.birthDate)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#000326] dark:text-white">Meu perfil</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Meu perfil</h1>
         <p className="mt-1 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
           Dados usados para personalizar treinos e orientações. E-mail da conta: {user?.email}
           {age != null ? ` · ${age} anos` : ''}
@@ -437,7 +437,7 @@ export function StudentProfileEditor() {
         type="button"
         disabled={saving || Boolean(loadError)}
         onClick={handleSave}
-        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#000326] text-white dark:bg-white dark:text-[#000326] font-medium disabled:opacity-50"
+        className="cp-btn-sm inline-flex items-center gap-2 disabled:opacity-50"
       >
         <Save className="w-4 h-4" />
         {saving ? 'Salvando…' : 'Salvar perfil'}

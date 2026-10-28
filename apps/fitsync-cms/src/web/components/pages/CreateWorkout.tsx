@@ -240,10 +240,10 @@ export function CreateWorkout() {
   };
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1480px] mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="dark:text-white text-slate-900 mb-2">Criar Novo Treino</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Criar Novo Treino</h1>
         <p className="text-sm dark:text-zinc-400 text-slate-500">
           Monte um treino personalizado com vasta biblioteca de exercícios
         </p>
@@ -331,7 +331,7 @@ export function CreateWorkout() {
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
                   placeholder="Ex: Push A"
-                  className="w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white text-slate-900 placeholder:dark:text-zinc-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="cp-field cp-field-plain text-sm text-slate-900 placeholder:dark:text-zinc-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
 
@@ -340,7 +340,7 @@ export function CreateWorkout() {
                 <select
                   value={selectedStudent}
                   onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="cp-field cp-field-plain text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   <option value="">Selecione...</option>
                   {students.map((student) => (

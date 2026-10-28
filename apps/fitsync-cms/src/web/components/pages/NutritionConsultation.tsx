@@ -13,7 +13,7 @@ import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 import { formatLocalDate, localDateToIso, todayLocalDate } from '../../lib/localDate'
 
 const input =
-  'w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
+  'cp-field cp-field-plain text-sm'
 
 export function NutritionConsultation() {
   const { patientId } = useParams<{ patientId: string }>()
@@ -74,12 +74,12 @@ export function NutritionConsultation() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <button type="button" onClick={() => navigate(-1)} className="text-sm dark:text-zinc-400">
         Voltar
       </button>
-      <h1 className="text-2xl font-bold dark:text-white">Consulta nutricional</h1>
-      <div className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5 space-y-3">
+      <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Consulta nutricional</h1>
+      <div className="cp-panel p-5 space-y-3">
         <select className={input} value={student} onChange={(e) => setStudent(e.target.value)}>
           <option value="">Paciente</option>
           {patients.map((row) => (
@@ -95,12 +95,12 @@ export function NutritionConsultation() {
           type="button"
           disabled={saving}
           onClick={() => void handleSave()}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-[#000326] text-white dark:bg-white dark:text-[#000326]"
+          className="cp-btn-sm"
         >
           {saving ? 'Salvando…' : 'Salvar consulta'}
         </button>
       </div>
-      <section className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5 space-y-2">
+      <section className="cp-panel p-5 space-y-2">
         {items.length === 0 ? (
           <p className="text-sm dark:text-zinc-400">Nenhuma consulta ainda.</p>
         ) : (

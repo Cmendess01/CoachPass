@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { fetchLinkedPeople, fetchMeUser, type LinkedPerson, type ProfessionalUser } from '../lib/professionalApi'
 import { AuthedImage } from './AuthedImage'
 
-const card = 'rounded-2xl border dark:border-zinc-800 border-slate-200 dark:bg-zinc-900 bg-white p-5'
+const card = 'cp-panel p-5'
 
 export function ProfessionalProfile() {
   const { user } = useAuth()
@@ -23,7 +23,7 @@ export function ProfessionalProfile() {
   const specialties = (doc?.specialties || []).map((item) => item.value).filter(Boolean)
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div className={card}>
         <AuthedImage
           src={doc?.avatarUrl || user.avatar}
@@ -31,7 +31,7 @@ export function ProfessionalProfile() {
           alt={name}
           className="w-16 h-16 rounded-2xl object-cover"
         />
-        <h1 className="mt-4 text-2xl font-bold dark:text-white">{name}</h1>
+        <h1 className="mt-4 cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">{name}</h1>
         <p className="text-sm dark:text-zinc-400">
           {user.role === 'personal' ? 'Personal trainer' : 'Nutricionista'}
           {doc?.city ? ` · ${doc.city}` : ''}

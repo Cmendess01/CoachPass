@@ -25,7 +25,7 @@ function workoutTitle(value: unknown): string {
   return 'Treino'
 }
 
-const card = 'rounded-2xl border dark:border-zinc-800 border-slate-200 dark:bg-zinc-900 bg-white p-5'
+const card = 'cp-panel p-5'
 
 export function StudentDetails() {
   const { id } = useParams<{ id: string }>()
@@ -83,7 +83,7 @@ export function StudentDetails() {
   const age = profile ? ageFromBirthDate(profile.birthDate) : null
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <button
         type="button"
         onClick={() => navigate('/personal')}
@@ -94,7 +94,7 @@ export function StudentDetails() {
       {error && <div className={`${card} text-sm text-red-500`}>{error}</div>}
 
       <div className={card}>
-        <h1 className="text-2xl font-bold dark:text-white text-slate-900">{name}</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">{name}</h1>
         <p className="mt-1 text-sm dark:text-zinc-400 text-slate-500">{email}</p>
         <p className="mt-3 text-sm dark:text-zinc-300 text-slate-700">
           {age ? `${age} anos` : 'Idade não informada'}

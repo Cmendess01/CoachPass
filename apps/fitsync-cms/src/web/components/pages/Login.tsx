@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { CheckCircle, ChevronRight, Mail, X, Zap, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Dumbbell, Mail, Salad, TrendingUp, X } from 'lucide-react';
 import { useAuth, UserRole } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { postJson, PayloadApiError, extractPayloadMessage, USERS_API } from '@/lib/cms';
 import { PasswordInput } from '../PasswordField';
+import { AuthShell, FieldLabel } from '../brand/AuthShell';
+import { CTAButton, Reveal } from '../brand/Brand';
 
 function pathForRole(role: UserRole) {
   if (role === 'student') return '/app';
@@ -14,8 +16,7 @@ function pathForRole(role: UserRole) {
   return '/selecionar-painel';
 }
 
-const inputCls =
-  'w-full pl-10 pr-4 py-3 rounded-lg bg-[#f3f4f9] border border-[#000326]/10 text-[#000326] placeholder:text-[#8e8e9a] focus:outline-none focus:ring-1 focus:ring-[#000346] dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-[#C5C5CE]';
+const iconCls = 'w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--dim)] pointer-events-none';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -70,14 +71,33 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#f3f4f9] dark:bg-[#000326]">
+    <AuthShell
+      title="Bom te ver"
+      accent="de volta."
+      lead="Entre com o e-mail e a senha da sua conta. O painel certo abre sozinho pelo seu perfil."
+      aside={
+        <div className="mt-10 grid grid-cols-3 gap-3">
+          {[
+            { icon: Dumbbell, c: 'var(--blue-2)', k: 'Treino', v: 'Push A' },
+            { icon: Salad, c: 'var(--amber)', k: 'Calorias', v: '1.420' },
+            { icon: TrendingUp, c: 'var(--teal)', k: 'Carga', v: '+5 kg' },
+          ].map(({ icon: Icon, c, k, v }) => (
+            <div key={k} className="cp-card p-4">
+              <Icon className="w-4 h-4" style={{ color: c }} />
+              <p className="cp-mono mt-3 text-[10.5px] uppercase tracking-[0.12em] text-[var(--muted)]">{k}</p>
+              <p className="cp-display text-[18px] font-bold">{v}</p>
+            </div>
+          ))}
+        </div>
+      }
+    >
       <AnimatePresence>
         {showForgotPassword && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
             onClick={() => setShowForgotPassword(false)}
           >
             <motion.div
@@ -85,14 +105,12 @@ export function Login() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-white rounded-2xl p-8 border border-[#000326]/10 shadow-xl dark:bg-[#000137] dark:border-white/10"
+              className="w-full max-w-md rounded-3xl p-8 bg-[var(--ink-3)] border border-[var(--line-2)]"
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-[#000326] text-lg font-medium dark:text-white">Recuperar senha</h3>
-                  <p className="text-sm text-[#6a6a7a] mt-1 dark:text-[#C5C5CE]">
-                    Enviaremos um link para seu e-mail
-                  </p>
+                  <h3 className="cp-display text-[24px] font-bold">Recuperar senha</h3>
+                  <p className="text-[14px] text-[var(--muted)] mt-1">Enviaremos um link para seu e-mail</p>
                 </div>
                 <button
                   onClick={() => setShowForgotPassword(false)}
@@ -104,7 +122,7 @@ export function Login() {
               {!forgotSent ? (
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="relative">
-                    <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#8e8e9a]" />
+                    <Mail className={iconCls} />
                     <input
                       type="email"
                       value={forgotEmail}
@@ -112,23 +130,19 @@ export function Login() {
                       placeholder="seu@email.com"
                       autoComplete="email"
                       autoFocus
-                      className={inputCls}
+                      className="cp-field"
                       required
                     />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={!forgotEmail || forgotLoading}
-                    className="w-full py-3 rounded-lg text-white bg-[#000326] hover:bg-[#000137] disabled:opacity-50 dark:bg-white dark:text-[#000326] dark:hover:bg-[#C5C5CE]"
-                  >
+                  <CTAButton type="submit" block disabled={!forgotEmail || forgotLoading}>
                     {forgotLoading ? 'Enviando…' : 'Enviar link de recuperação'}
-                  </button>
+                  </CTAButton>
                 </form>
               ) : (
                 <div className="text-center py-4">
-                  <CheckCircle className="w-8 h-8 text-[#000326] mx-auto mb-3 dark:text-white" />
-                  <p className="text-[#000326] font-medium dark:text-white">Link enviado</p>
-                  <p className="text-sm text-[#6a6a7a] mt-1 dark:text-[#C5C5CE]">Verifique {forgotEmail}</p>
+                  <CheckCircle className="w-9 h-9 text-[var(--teal)] mx-auto mb-3" />
+                  <p className="font-semibold">Link enviado</p>
+                  <p className="text-[14px] text-[var(--muted)] mt-1">Verifique {forgotEmail}</p>
                 </div>
               )}
             </motion.div>
@@ -136,116 +150,88 @@ export function Login() {
         )}
       </AnimatePresence>
 
-      <div className="w-full max-w-md">
-        <div className="mb-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#6a6a7a] hover:text-[#000326] dark:text-[#C5C5CE] dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para a home
-          </Link>
-        </div>
-        <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#000326] to-[#000346] dark:from-white dark:to-[#C5C5CE]">
-              <Zap className="w-5 h-5 text-white dark:text-[#000326]" fill="currentColor" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#000326] dark:text-white">CoachPass</span>
-          </Link>
-          <h1 className="mt-6 text-2xl font-bold text-[#000326] dark:text-white">Entrar</h1>
-          <p className="mt-2 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
-            Use o e-mail e a senha da sua conta. Se for a primeira vez como aluno, o app pede o
-            perfil completo (telefone, peso, altura, objetivo etc.) logo após o login.
+      <div className="w-full max-w-[440px]">
+        <Reveal>
+          <p className="cp-kicker">Acesso</p>
+          <h2 className="cp-display mt-3 text-[40px] font-bold leading-none">Entrar</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-[var(--muted)]">
+            Se for a primeira vez como aluno, o app pede o perfil completo logo após o login.
           </p>
           {isAuthenticated && user && (
             <button
               type="button"
               onClick={() => navigate(pathForRole(user.role))}
-              className="mt-4 text-sm font-semibold text-[#000326] underline dark:text-white"
+              className="mt-4 text-[14px] font-semibold text-[var(--blue-2)] hover:underline"
             >
               Ir para o painel
             </button>
           )}
-        </div>
+        </Reveal>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl p-6 border border-[#000326]/10 space-y-4 dark:bg-[#000137] dark:border-white/10"
-        >
-          <div>
-            <label htmlFor="login-email" className="block text-sm text-[#000326] mb-2 dark:text-[#C5C5CE]">E-mail</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#8e8e9a]" />
-              <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                autoComplete="email"
-                className={inputCls}
+        <Reveal delay={0.1}>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div>
+              <FieldLabel htmlFor="login-email">E-mail</FieldLabel>
+              <div className="relative">
+                <Mail className={iconCls} />
+                <input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  className="cp-field"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <FieldLabel htmlFor="login-password">Senha</FieldLabel>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(true);
+                    setForgotEmail(email);
+                  }}
+                  className="mb-2 text-[13px] text-[var(--muted)] hover:text-white transition-colors"
+                >
+                  Esqueci a senha
+                </button>
+              </div>
+              <PasswordInput
+                id="login-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Sua senha"
+                autoComplete="current-password"
+                iconClassName="left-4 text-[var(--dim)]"
+                toggleClassName="text-[var(--muted)] hover:text-white"
+                className="cp-field"
                 required
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="login-password" className="block text-sm text-[#000326] mb-2 dark:text-[#C5C5CE]">
-              Senha
-            </label>
-            <PasswordInput
-              id="login-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Sua senha"
-              autoComplete="current-password"
-              iconClassName="text-[#8e8e9a]"
-              toggleClassName="text-[#8e8e9a] hover:text-[#000326] dark:text-[#C5C5CE] dark:hover:text-white"
-              className={inputCls}
-              required
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setShowForgotPassword(true);
-                setForgotEmail(email);
-              }}
-              className="text-sm text-[#6a6a7a] hover:text-[#000326] dark:text-[#C5C5CE] dark:hover:text-white"
-            >
-              Esqueci a senha
-            </button>
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            className="w-full py-3 rounded-xl text-white bg-[#000326] hover:bg-[#000137] disabled:opacity-50 flex items-center justify-center gap-2 dark:bg-white dark:text-[#000326] dark:hover:bg-[#C5C5CE]"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-            {!loading && <ChevronRight className="w-4 h-4" />}
-          </button>
-          <p className="text-sm text-center text-[#6a6a7a] dark:text-[#C5C5CE]">
-            Ainda não tem conta?{' '}
-            <Link
-              to="/cadastro"
-              className="font-semibold text-[#000326] hover:underline dark:text-white"
-            >
-              Criar conta
-            </Link>
-          </p>
-          <div className="pt-2 border-t border-[#000326]/10 dark:border-white/10">
-            <a
-              href="/privacidade"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-[#000326] border border-[#000326]/15 hover:bg-[#f3f4f9] dark:text-[#C5C5CE] dark:border-white/15 dark:hover:bg-white/5 transition-colors"
-            >
-              Termos e Política de Privacidade
-            </a>
-          </div>
-        </form>
+            <div className="pt-2">
+              <CTAButton type="submit" block disabled={loading || !email || !password}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </CTAButton>
+            </div>
+          </form>
+        </Reveal>
+
+        <p className="mt-6 text-center text-[14px] text-[var(--muted)]">
+          Ainda não tem conta?{' '}
+          <Link to="/cadastro" className="font-semibold text-white hover:underline">
+            Criar conta
+          </Link>
+        </p>
+        <p className="mt-3 text-center">
+          <Link to="/privacidade" className="text-[13px] text-[var(--dim)] hover:text-white">
+            Termos e Política de Privacidade
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   );
 }

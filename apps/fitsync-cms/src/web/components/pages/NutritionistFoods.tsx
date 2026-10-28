@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import { fetchFoods, type FoodDoc } from '../../lib/studentApi'
 
-const card = 'rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5'
+const card = 'cp-panel p-5'
 
 const sourceLabel: Record<FoodDoc['source'], string> = {
   taco: 'TACO',
@@ -28,9 +28,9 @@ export function NutritionistFoods() {
   }, [user?.accessToken, search])
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold dark:text-white">Alimentos</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Alimentos</h1>
         <p className="text-sm dark:text-zinc-400 mt-1">
           Base de referência TACO/TBCA (por 100 g). Não é a tabela oficial completa.
         </p>
@@ -40,7 +40,7 @@ export function NutritionistFoods() {
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Buscar alimento"
         aria-label="Buscar alimento"
-        className="w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white"
+        className="cp-field cp-field-plain text-sm"
       />
       {loading && <p className="text-sm dark:text-zinc-400">Carregando…</p>}
       <section className={card}>

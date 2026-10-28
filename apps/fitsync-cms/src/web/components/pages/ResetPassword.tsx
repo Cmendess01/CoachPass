@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, ChevronRight, Zap } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useAuth, type UserRole } from '../../context/AuthContext'
 import { getPasswordErrors } from '@/lib/passwordPolicy'
 import { PasswordInput, PasswordRequirements } from '../PasswordField'
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
+import { AuthShell, FieldLabel } from '../brand/AuthShell'
+import { CTAButton } from '../brand/Brand'
 
 function pathForRole(role: UserRole) {
   if (role === 'student') return '/app'
@@ -13,9 +14,6 @@ function pathForRole(role: UserRole) {
   if (role === 'nutritionist') return '/nutritionist'
   return '/selecionar-painel'
 }
-
-const inputCls =
-  'w-full pl-10 pr-4 py-3 rounded-lg bg-[#f3f4f9] border border-[#000326]/10 text-[#000326] placeholder:text-[#8e8e9a] focus:outline-none focus:ring-1 focus:ring-[#000346] dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-[#C5C5CE]'
 
 export function ResetPassword() {
   const { token } = useParams<{ token: string }>()
@@ -66,82 +64,52 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#f3f4f9] dark:bg-[#000326]">
-      <div className="w-full max-w-md">
-        <div className="mb-4">
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#6a6a7a] hover:text-[#000326] dark:text-[#C5C5CE] dark:hover:text-white"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao login
-          </Link>
+    <AuthShell
+      title="Escolha uma"
+      accent="senha nova."
+      lead="O link do e-mail vale para esta troca. A regra de senha é a mesma do cadastro."
+    >
+      <form onSubmit={handleSubmit} className="w-full max-w-[420px] space-y-5">
+        <div>
+          <p className="cp-kicker">Acesso</p>
+          <h2 className="cp-display mt-3 text-[40px] font-bold leading-none">Nova senha</h2>
         </div>
-        <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#000326] to-[#000346] dark:from-white dark:to-[#C5C5CE]">
-              <Zap className="w-5 h-5 text-white dark:text-[#000326]" fill="currentColor" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#000326] dark:text-white">
-              CoachPass
-            </span>
-          </Link>
-          <h1 className="mt-6 text-2xl font-bold text-[#000326] dark:text-white">Nova senha</h1>
-          <p className="mt-2 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
-            Defina uma senha forte para voltar à sua conta.
+        {error && (
+          <p role="alert" className="text-[14px] text-[#ff8a95]">
+            {error}
           </p>
+        )}
+        <div>
+          <FieldLabel htmlFor="reset-password">Nova senha</FieldLabel>
+          <PasswordInput
+            id="reset-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Nova senha"
+            autoComplete="new-password"
+            iconClassName="text-[var(--dim)]"
+            className="cp-field"
+            required
+          />
+          <PasswordRequirements password={password} showErrors={attempted} />
         </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl p-6 border border-[#000326]/10 space-y-4 dark:bg-[#000137] dark:border-white/10"
-        >
-          {error && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-300">
-              {error}
-            </p>
-          )}
-          <div>
-            <label htmlFor="reset-password" className="block text-sm text-[#000326] mb-2 dark:text-[#C5C5CE]">
-              Nova senha
-            </label>
-            <PasswordInput
-              id="reset-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nova senha"
-              autoComplete="new-password"
-              iconClassName="text-[#8e8e9a]"
-              className={inputCls}
-              required
-            />
-            <PasswordRequirements password={password} showErrors={attempted} />
-          </div>
-          <div>
-            <label htmlFor="reset-confirm" className="block text-sm text-[#000326] mb-2 dark:text-[#C5C5CE]">
-              Confirmar senha
-            </label>
-            <PasswordInput
-              id="reset-confirm"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Repita a senha"
-              autoComplete="new-password"
-              iconClassName="text-[#8e8e9a]"
-              className={inputCls}
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !password || !confirm}
-            className="w-full py-3 rounded-xl text-white bg-[#000326] hover:bg-[#000137] disabled:opacity-50 flex items-center justify-center gap-2 dark:bg-white dark:text-[#000326]"
-          >
-            {loading ? 'Salvando…' : 'Redefinir senha'}
-            {!loading && <ChevronRight className="w-4 h-4" />}
-          </button>
-        </form>
-      </div>
-    </div>
+        <div>
+          <FieldLabel htmlFor="reset-confirm">Confirmar senha</FieldLabel>
+          <PasswordInput
+            id="reset-confirm"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Repita a senha"
+            autoComplete="new-password"
+            iconClassName="text-[var(--dim)]"
+            className="cp-field"
+            required
+          />
+        </div>
+        <CTAButton type="submit" block disabled={loading || !password || !confirm}>
+          {loading ? 'Salvando…' : 'Redefinir senha'}
+        </CTAButton>
+      </form>
+    </AuthShell>
   )
 }

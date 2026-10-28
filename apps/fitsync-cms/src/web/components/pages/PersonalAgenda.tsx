@@ -15,7 +15,7 @@ import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 import { formatLocalDate, localDateInputValue, localDateToIso, todayLocalDate } from '../../lib/localDate'
 
 const input =
-  'w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
+  'cp-field cp-field-plain text-sm'
 
 const typeLabel: Record<SessionDoc['type'], string> = {
   training: 'Treino',
@@ -125,12 +125,12 @@ export function PersonalAgenda() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold dark:text-white">Agenda e sessões</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Agenda e sessões</h1>
         <p className="text-sm dark:text-zinc-400 mt-1">Horários reais do vínculo ativo.</p>
       </div>
-      <div className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5 space-y-3">
+      <div className="cp-panel p-5 space-y-3">
         <select className={input} value={student} onChange={(e) => setStudent(e.target.value)}>
           <option value="">Aluno</option>
           {students.map((row) => (
@@ -154,12 +154,12 @@ export function PersonalAgenda() {
           type="button"
           disabled={saving}
           onClick={() => void handleCreate()}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-[#000326] text-white dark:bg-white dark:text-[#000326]"
+          className="cp-btn-sm"
         >
           {saving ? 'Salvando…' : 'Agendar'}
         </button>
       </div>
-      <section className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white overflow-hidden">
+      <section className="cp-panel overflow-hidden">
         {sessions.length === 0 ? (
           <p className="p-5 text-sm dark:text-zinc-400">Nenhuma sessão.</p>
         ) : (

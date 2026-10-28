@@ -10,7 +10,7 @@ import {
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 
 const input =
-  'w-full px-3 py-2 rounded-xl text-sm dark:bg-zinc-800 bg-slate-50 border dark:border-zinc-700 border-slate-200 dark:text-white'
+  'cp-field cp-field-plain text-sm'
 
 const types: { id: RestrictionDoc['type']; label: string }[] = [
   { id: 'injury', label: 'Lesão' },
@@ -64,12 +64,12 @@ export function StudentRestriction() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <button type="button" onClick={() => navigate(-1)} className="text-sm dark:text-zinc-400">
         Voltar
       </button>
-      <h1 className="text-2xl font-bold dark:text-white">Restrições</h1>
-      <div className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5 space-y-3">
+      <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Restrições</h1>
+      <div className="cp-panel p-5 space-y-3">
         <input className={input} placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} />
         <div className="grid sm:grid-cols-2 gap-2">
           <select className={input} value={type} onChange={(e) => setType(e.target.value as RestrictionDoc['type'])}>
@@ -90,12 +90,12 @@ export function StudentRestriction() {
           type="button"
           disabled={saving}
           onClick={() => void handleSave()}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-[#000326] text-white dark:bg-white dark:text-[#000326]"
+          className="cp-btn-sm"
         >
           {saving ? 'Salvando…' : 'Salvar'}
         </button>
       </div>
-      <section className="rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5 space-y-2">
+      <section className="cp-panel p-5 space-y-2">
         {items.length === 0 ? (
           <p className="text-sm dark:text-zinc-400">Nenhuma restrição.</p>
         ) : (

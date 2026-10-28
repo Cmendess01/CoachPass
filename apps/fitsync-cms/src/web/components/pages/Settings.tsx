@@ -322,7 +322,7 @@ export function Settings() {
   ];
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1200px] mx-auto">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1200px] mx-auto">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -336,7 +336,7 @@ export function Settings() {
             <SettingsIcon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="dark:text-white text-slate-900">Configurações</h1>
+            <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Configurações</h1>
             <p className="text-sm dark:text-zinc-400 text-slate-500">Gerencie sua conta e preferências</p>
           </div>
         </div>
@@ -345,7 +345,7 @@ export function Settings() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Nav */}
         <div className="lg:w-60 flex-shrink-0">
-          <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-3 space-y-1">
+          <div className="cp-panel p-3 space-y-1">
             {/* User Card */}
             <div className="flex items-center gap-3 p-3 mb-2 pb-4 border-b dark:border-zinc-800 border-slate-100">
               <div className="relative">
@@ -411,7 +411,7 @@ export function Settings() {
               {/* ── PROFILE TAB ── */}
               {activeTab === 'profile' && (
                 <div className="space-y-6">
-                  <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                  <div className="cp-panel p-6">
                     <h3 className="dark:text-white text-slate-900 mb-6" style={{ fontWeight: 700 }}>
                       Informações Pessoais
                     </h3>
@@ -524,7 +524,7 @@ export function Settings() {
 
               {/* ── NOTIFICATIONS TAB ── */}
               {activeTab === 'notifications' && (
-                <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                <div className="cp-panel p-6">
                   <h3 className="dark:text-white text-slate-900 mb-6" style={{ fontWeight: 700 }}>
                     Preferências de Notificação
                   </h3>
@@ -614,7 +614,7 @@ export function Settings() {
 
               {/* ── PRIVACY TAB ── */}
               {activeTab === 'privacy' && (
-                <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                <div className="cp-panel p-6">
                   <h3 className="dark:text-white text-slate-900 mb-6" style={{ fontWeight: 700 }}>
                     Configurações de Privacidade
                   </h3>
@@ -668,7 +668,7 @@ export function Settings() {
               {/* ── SECURITY TAB ── */}
               {activeTab === 'security' && (
                 <div className="space-y-4">
-                  <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                  <div className="cp-panel p-6">
                     <h3 className="dark:text-white text-slate-900 mb-6" style={{ fontWeight: 700 }}>
                       Segurança da Conta
                     </h3>
@@ -744,7 +744,7 @@ export function Settings() {
 
                 return (
                 <div className="space-y-4">
-                  <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                  <div className="cp-panel p-6">
                     <h3 className="dark:text-white text-slate-900 mb-4" style={{ fontWeight: 700 }}>Plano Atual</h3>
                     <div
                       className={`p-5 rounded-2xl border ${
@@ -840,7 +840,7 @@ export function Settings() {
                     )}
                   </div>
 
-                  <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                  <div className="cp-panel p-6">
                     <h3 className="dark:text-white text-slate-900 mb-4" style={{ fontWeight: 700 }}>
                       {hasPaidPlan ? 'Método de Pagamento' : 'Assinar um plano'}
                     </h3>
@@ -905,7 +905,7 @@ export function Settings() {
 
               {/* ── DATA TAB ── */}
               {activeTab === 'data' && (
-                <div className="dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6">
+                <div className="cp-panel p-6">
                   <h3 className="dark:text-white text-slate-900 mb-6" style={{ fontWeight: 700 }}>
                     Gerenciar Meus Dados
                   </h3>
@@ -967,7 +967,7 @@ export function Settings() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="change-password-title"
-              className="w-full max-w-md max-h-[90vh] overflow-y-auto dark:bg-zinc-900 bg-white rounded-3xl border dark:border-zinc-800 border-slate-200 p-6 shadow-2xl"
+              className="w-full max-w-md max-h-[90vh] overflow-y-auto cp-panel p-6 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 id="change-password-title" className="dark:text-white text-slate-900 text-lg" style={{ fontWeight: 700 }}>Alterar Senha</h3>

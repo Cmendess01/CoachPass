@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
-import { Link } from 'react-router'
-import { ArrowLeft, ExternalLink, Shield } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { AuthShell } from '../brand/AuthShell'
+import { CTAButton } from '../brand/Brand'
 
 const POLICY_URL = '/politica-de-privacidade.html'
 
@@ -10,34 +11,22 @@ export function PrivacyPolicy() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f3f4f9] dark:bg-[#000326] px-4 py-10">
-      <div className="mx-auto max-w-lg text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#000326] dark:bg-white/10 mb-4">
-          <Shield className="w-6 h-6 text-white dark:text-[#C5C5CE]" />
-        </div>
-        <h1 className="text-xl font-bold text-[#000326] dark:text-white">
-          Política de Privacidade
-        </h1>
-        <p className="mt-2 text-sm text-[#6a6a7a] dark:text-[#C5C5CE]">
-          Abrindo o documento completo…
-        </p>
-        <a
-          href={POLICY_URL}
-          className="mt-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#000326] text-white dark:bg-white dark:text-[#000326]"
-        >
-          Abrir política completa
-          <ExternalLink className="w-4 h-4" />
-        </a>
-        <div className="mt-4">
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-2 text-sm text-[#000326] dark:text-white hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao login
-          </Link>
+    <AuthShell
+      title="Seus dados,"
+      accent="com clareza."
+      lead="A política completa abre em seguida. O documento é o mesmo que o cadastro pede para você aceitar."
+    >
+      <div className="w-full max-w-md text-center">
+        <p className="cp-kicker">Privacidade</p>
+        <h2 className="cp-display mt-3 text-[36px] font-bold leading-none">Abrindo a política…</h2>
+        <p className="mt-3 text-[15px] text-[var(--muted)]">Se a página não mudar, use o botão abaixo.</p>
+        <div className="mt-8">
+          <CTAButton href={POLICY_URL} block>
+            Abrir política completa
+            <ExternalLink className="w-4 h-4" />
+          </CTAButton>
         </div>
       </div>
-    </div>
+    </AuthShell>
   )
 }

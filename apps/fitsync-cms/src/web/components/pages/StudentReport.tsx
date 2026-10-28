@@ -9,5 +9,5 @@ export function StudentReport() {
     navigate(id ? `/personal/aluno/${id}` : '/personal', { replace: true })
   }, [id, navigate])
 
-  return <p className="p-8 text-sm dark:text-zinc-400">Abrindo ficha do aluno…</p>
+  return <p className="px-8 pt-10 text-sm text-[var(--muted)]">Abrindo ficha do aluno…</p>
 }

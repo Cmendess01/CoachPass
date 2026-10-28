@@ -544,7 +544,7 @@ export function CreateDietPlan() {
       : null
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1480px] mx-auto">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -556,7 +556,7 @@ export function CreateDietPlan() {
         </button>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="dark:text-white text-slate-900 mb-1">Criar Plano Alimentar</h1>
+            <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Criar Plano Alimentar</h1>
             <p className="text-sm dark:text-zinc-400 text-slate-500">Monte um plano nutricional completo e personalizado</p>
           </div>
           <div className="flex gap-3 flex-wrap">

@@ -4,12 +4,19 @@ import { Bell, Menu, Moon, Sun } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { AIChat } from './AIChat';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { ProShell } from './pro/ProShell';
+import { StudentShell } from './student/StudentShell';
 import { toast } from 'sonner';
 
 export function Layout() {
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
+
+  if (user?.role === 'student') return <StudentShell />;
+  if (user?.role === 'personal' || user?.role === 'nutritionist') return <ProShell />;
 
   return (
     <div className="min-h-screen flex bg-[#f3f4f9] text-[#000326] dark:bg-[#000326] dark:text-white">

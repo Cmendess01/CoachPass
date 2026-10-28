@@ -14,7 +14,7 @@ import { relName } from '../../lib/studentApi'
 import { PayloadApiError, extractPayloadMessage } from '@/lib/cms'
 import { localDateToIso, todayLocalDate } from '../../lib/localDate'
 
-const card = 'rounded-2xl border dark:border-zinc-800 dark:bg-zinc-900 bg-white p-5'
+const card = 'cp-panel p-5'
 
 const statusLabel: Record<TransactionDoc['status'], string> = {
   pending: 'Pendente',
@@ -80,9 +80,9 @@ export function ProfessionalFinance() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl mx-auto space-y-6">
+    <div className="relative px-4 sm:px-8 pt-8 pb-28 max-w-[1080px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold dark:text-white">Financeiro</h1>
+        <h1 className="cp-display text-[clamp(32px,4vw,48px)] font-bold leading-[1.02]">Financeiro</h1>
         <p className="text-sm dark:text-zinc-400 mt-1">
           Lançamentos manuais. Pagamento online fica desligado por enquanto — as funções do app continuam liberadas.
         </p>
@@ -130,7 +130,7 @@ export function ProfessionalFinance() {
           type="button"
           disabled={saving}
           onClick={() => void handleCreate()}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-[#000326] text-white dark:bg-white dark:text-[#000326]"
+          className="cp-btn-sm"
         >
           {saving ? 'Salvando…' : 'Lançar'}
         </button>
